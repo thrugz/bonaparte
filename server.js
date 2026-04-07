@@ -490,7 +490,64 @@ app.get("/api/competitors/:name/intel", requireAuth, async (req, res) => {
   }
 });
 
-// (moved above :name route)
+// Competitor vs Market Demand matrix
+app.get("/api/competitors/demand-matrix", requireAuth, async (req, res) => {
+  const insightsPath = resolve(__dirname, "data", "survey-insights.json");
+  if (!existsSync(insightsPath)) return res.status(404).json({ error: "No survey data" });
+
+  const survey = JSON.parse(readFileSync(insightsPath, "utf-8"));
+  const demands = survey.market_demands.sort((a, b) => b.demand_score - a.demand_score);
+  const savedIntel = JSON.parse(getSetting("competitor_intel") || "{}");
+  const compNames = Object.keys(savedIntel);
+
+  if (!compNames.length) return res.json({ demands: demands.map(d => ({ id: d.id, name: d.name, demand_score: d.demand_score, vitus_status: d.vitus_status, vitus_gap: d.gap, competitors: {} })), competitors: [] });
+
+  // Build compact context for each competitor from saved intel
+  const compContext = compNames.map(name => {
+    const c = savedIntel[name];
+    const dims = (c.scorecard?.dimensions || []).map(d => `${d.name}:${d.score}/10`).join(", ");
+    const verdict = c.scorecard?.verdict || "";
+    const news = (c.sections || []).map(s => s.answer || "").filter(Boolean).join(" ").slice(0, 300);
+    return `${name}: ${dims}. ${verdict} ${news}`;
+  }).join("\n\n");
+
+  const demandList = demands.map(d => `${d.id}: ${d.name} (${d.demand_score}/10)`).join("\n");
+
+  try {
+    const { ask } = await import("./lib/claude.js");
+    const prompt = `Rate how well each competitor addresses these market demands. Score 0-3: 0=no coverage, 1=minimal, 2=partial, 3=strong.
+
+COMPETITORS:
+${compContext}
+
+MARKET DEMANDS:
+${demandList}
+
+Return ONLY a JSON object where keys are demand IDs and values are objects mapping competitor names to scores:
+{"data-integration":{"Speckle":3,"Dalux":1},...}`;
+
+    const reply = await ask(prompt, 2000, { fast: true });
+    const scores = JSON.parse(reply.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, ""));
+
+    const result = demands.map(d => ({
+      id: d.id,
+      name: d.name,
+      demand_score: d.demand_score,
+      vitus_status: d.vitus_status,
+      vitus_gap: d.gap,
+      competitors: scores[d.id] || {},
+    }));
+
+    res.json({ demands: result, competitors: compNames });
+  } catch (err) {
+    // Fallback: return demands without competitor scores
+    res.json({
+      demands: demands.map(d => ({ id: d.id, name: d.name, demand_score: d.demand_score, vitus_status: d.vitus_status, vitus_gap: d.gap, competitors: {} })),
+      competitors: compNames,
+      error: err.message,
+    });
+  }
+});
 
 // ── Feature Hunt routes ──
 

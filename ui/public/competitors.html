@@ -76,6 +76,36 @@
     .dim-reason { font-size: 11px; color: var(--text-3); margin: -4px 0 10px 152px; }
     .verdict { font-size: 13px; color: var(--text); line-height: 1.7; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
 
+    .tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .matrix-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .matrix-table th { padding: 8px 10px; text-align: left; font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); }
+    .matrix-table th.comp-col { text-align: center; min-width: 80px; }
+    .matrix-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .matrix-table tr:hover { background: var(--bg-1); }
+    .demand-name { font-weight: 500; color: var(--text); }
+    .demand-score { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+    .vitus-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .vitus-badge.strong { background: rgba(34,197,94,0.15); color: var(--green); }
+    .vitus-badge.partial { background: rgba(250,204,21,0.15); color: #facc15; }
+    .vitus-badge.weak { background: rgba(249,115,22,0.15); color: #f97316; }
+    .vitus-badge.none { background: rgba(239,68,68,0.12); color: var(--red); }
+    .coverage-cell { text-align: center; }
+    .cov-dot { display: inline-block; width: 24px; height: 24px; border-radius: 4px; line-height: 24px; text-align: center; font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+    .cov-0 { background: rgba(239,68,68,0.1); color: var(--red); }
+    .cov-1 { background: rgba(249,115,22,0.12); color: #f97316; }
+    .cov-2 { background: rgba(250,204,21,0.12); color: #facc15; }
+    .cov-3 { background: rgba(34,197,94,0.12); color: var(--green); }
+    .gap-text { font-size: 11px; color: var(--text-2); max-width: 350px; line-height: 1.5; }
+    .matrix-loading { text-align: center; padding: 40px; color: var(--text-3); font-style: italic; }
+    .matrix-legend { display: flex; gap: 16px; margin-bottom: 16px; font-size: 11px; color: var(--text-3); align-items: center; }
+    .matrix-legend .cov-dot { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
+
     .add-form {
       display: none; background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
       padding: 20px; margin-bottom: 24px;
@@ -108,27 +138,42 @@
   </div>
   <div class="container">
 
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2 style="margin:0">Competitors</h2>
-      <button onclick="toggleAdd()">+ Add Competitor</button>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('intel')">Competitor Intel</div>
+      <div class="tab" onclick="switchTab('demand')">Market Demand Coverage</div>
     </div>
 
-    <div class="add-form" id="addForm">
-      <label>Name</label>
-      <input type="text" id="addName" placeholder="e.g. Autodesk Tandem">
-      <label>Domain</label>
-      <input type="text" id="addDomain" placeholder="e.g. tandem.autodesk.com">
-      <label>Strategic Angle</label>
-      <textarea id="addAngle" placeholder="Why are they a threat? What's their positioning?"></textarea>
-      <div class="form-actions">
-        <button class="primary" onclick="addCompetitor()">Add</button>
-        <button onclick="toggleAdd()">Cancel</button>
+    <div class="tab-content active" id="tab-intel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2 style="margin:0">Competitors</h2>
+        <button onclick="toggleAdd()">+ Add Competitor</button>
       </div>
+
+      <div class="add-form" id="addForm">
+        <label>Name</label>
+        <input type="text" id="addName" placeholder="e.g. Autodesk Tandem">
+        <label>Domain</label>
+        <input type="text" id="addDomain" placeholder="e.g. tandem.autodesk.com">
+        <label>Strategic Angle</label>
+        <textarea id="addAngle" placeholder="Why are they a threat? What's their positioning?"></textarea>
+        <div class="form-actions">
+          <button class="primary" onclick="addCompetitor()">Add</button>
+          <button onclick="toggleAdd()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="comp-grid" id="compGrid"></div>
+      <div class="intel" id="intel"></div>
     </div>
 
-    <div class="comp-grid" id="compGrid"></div>
-
-    <div class="intel" id="intel"></div>
+    <div class="tab-content" id="tab-demand">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2 style="margin:0">How competitors address market demands</h2>
+        <button class="primary" onclick="loadDemandMatrix()" id="btnMatrix">Analyze</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Cross-references saved competitor intel with the Onsight survey (25 AEC professionals). Requires competitor intel to be fetched first.</p>
+      <div id="demandMatrix"><div class="matrix-loading">Click Analyze to evaluate competitor coverage against market demands.</div></div>
+    </div>
 
   </div>
 
@@ -363,6 +408,88 @@
       btn.disabled = false;
       btn.textContent = 'Refresh';
       mainBtn.disabled = false;
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab-content#tab-${tab}`).classList.add('active');
+      document.querySelectorAll('.tab')[tab === 'intel' ? 0 : 1].classList.add('active');
+    }
+
+    let matrixCache = null;
+
+    async function loadDemandMatrix() {
+      const el = document.getElementById('demandMatrix');
+      const btn = document.getElementById('btnMatrix');
+
+      if (matrixCache) {
+        renderMatrix(matrixCache);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+      el.innerHTML = '<div class="matrix-loading">Evaluating competitor coverage against 15 market demands...</div>';
+
+      try {
+        const r = await fetch('/api/competitors/demand-matrix');
+        const data = await r.json();
+        matrixCache = data;
+        renderMatrix(data);
+      } catch (err) {
+        el.innerHTML = '<div class="matrix-loading" style="color:var(--red)">Failed: ' + esc(err.message) + '</div>';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+    }
+
+    function renderMatrix(data) {
+      const el = document.getElementById('demandMatrix');
+      const comps = data.competitors || [];
+
+      let h = '<div class="matrix-legend">';
+      h += '<span>Coverage:</span>';
+      h += '<span class="cov-dot cov-0">0</span> None';
+      h += '<span class="cov-dot cov-1">1</span> Minimal';
+      h += '<span class="cov-dot cov-2">2</span> Partial';
+      h += '<span class="cov-dot cov-3">3</span> Strong';
+      h += '<span style="margin-left:16px">Vitus:</span>';
+      h += '<span class="vitus-badge strong">strong</span>';
+      h += '<span class="vitus-badge partial">partial</span>';
+      h += '<span class="vitus-badge weak">weak</span>';
+      h += '<span class="vitus-badge none">none</span>';
+      h += '</div>';
+
+      h += '<table class="matrix-table"><thead><tr>';
+      h += '<th>Demand</th><th>Score</th><th>Vitus</th>';
+      for (const c of comps) h += '<th class="comp-col">' + esc(c) + '</th>';
+      h += '<th>Gap / Opportunity</th>';
+      h += '</tr></thead><tbody>';
+
+      for (const d of data.demands) {
+        h += '<tr>';
+        h += '<td class="demand-name">' + esc(d.name) + '</td>';
+        h += '<td class="demand-score">' + d.demand_score + '/10</td>';
+        h += '<td><span class="vitus-badge ' + d.vitus_status + '">' + d.vitus_status + '</span></td>';
+        for (const c of comps) {
+          const score = d.competitors[c];
+          const s = score !== undefined ? score : '-';
+          const cls = score !== undefined ? 'cov-' + score : '';
+          h += '<td class="coverage-cell">' + (cls ? '<span class="cov-dot ' + cls + '">' + s + '</span>' : '<span style="color:var(--text-4)">-</span>') + '</td>';
+        }
+        h += '<td class="gap-text">' + esc(d.vitus_gap || '') + '</td>';
+        h += '</tr>';
+      }
+
+      h += '</tbody></table>';
+
+      if (data.error) {
+        h += '<div style="margin-top:12px;font-size:11px;color:var(--text-3)">Note: competitor scores unavailable (' + esc(data.error) + '). Showing Vitus status only.</div>';
+      }
+
+      el.innerHTML = h;
     }
 
     async function init() {

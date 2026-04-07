@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="stylesheet" href="/brand.css">
+  <title>Bonaparte — Feature Hunt</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    h2 { font-family: var(--font-head); font-size: 16px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
+    h2:first-child { margin-top: 0; }
+
+    button {
+      padding: 6px 14px; background: var(--bg-3); color: var(--text); border: 1px solid var(--border-hi);
+      border-radius: 4px; font-size: 12px; font-family: var(--font-body); cursor: pointer;
+    }
+    button:hover { background: var(--bg-4); }
+    button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    button.primary:hover { background: var(--v5); }
+    button.danger { border-color: var(--red-dim); color: var(--red); }
+    button.danger:hover { background: rgba(239,68,68,0.06); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .sources-panel {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+      margin-bottom: 24px;
+    }
+    .sources-panel summary {
+      cursor: pointer; font-size: 13px; color: var(--text-3); user-select: none;
+    }
+    .sources-panel summary:hover { color: var(--text); }
+    .source-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .source-row { display: flex; gap: 8px; align-items: center; }
+    .source-row input {
+      flex: 1; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border-hi);
+      border-radius: 4px; color: var(--text); font-size: 12px; font-family: var(--font-mono); outline: none;
+    }
+    .source-row input:focus { border-color: var(--accent); }
+    .source-row input.name { max-width: 200px; font-family: inherit; }
+
+    .hunt-status { color: var(--text-3); font-style: italic; padding: 24px 0; text-align: center; }
+    .feature-card {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px; padding: 20px;
+      margin-bottom: 12px; transition: border-color 0.15s;
+    }
+    .feature-card:hover { border-color: var(--border-hi); }
+    .feature-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .feature-title { font-family: var(--font-head); font-size: 15px; font-weight: 600; color: var(--white); }
+    .feature-source { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); white-space: nowrap; }
+    .feature-desc { font-size: 13px; color: var(--text-2); margin-bottom: 12px; line-height: 1.6; }
+    .feature-url { font-size: 12px; margin-bottom: 12px; }
+
+    .eval { padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.6; }
+    .eval.threat { background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.15); }
+    .eval.opportunity { background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.15); }
+    .eval.neutral { background: var(--bg-2); border: 1px solid var(--border-hi); }
+    .eval-type { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .eval-type.threat { color: var(--red); }
+    .eval-type.opportunity { color: var(--green); }
+    .eval-type.neutral { color: var(--text-3); }
+    .eval-vitus { color: var(--text); }
+    .eval-loading { color: var(--text-3); font-style: italic; font-size: 12px; }
+
+    .src-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .src-links a {
+      font-size: 11px; padding: 2px 8px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 4px; color: var(--accent);
+    }
+
+    /* Market demand styles */
+    .demand-badge {
+      display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+      border-radius: 4px; font-size: 11px; font-family: var(--font-mono); font-weight: 600;
+    }
+    .demand-badge.high { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .demand-badge.medium { background: rgba(234,179,8,0.1); color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
+    .demand-badge.low { background: var(--bg-2); color: var(--text-3); border: 1px solid var(--border); }
+    .demand-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .demand-tag {
+      font-size: 10px; padding: 1px 6px; background: rgba(99,102,241,0.08); color: var(--accent);
+      border: 1px solid rgba(99,102,241,0.2); border-radius: 3px;
+    }
+
+    .market-section { margin-bottom: 32px; }
+    .demand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 768px) { .demand-grid { grid-template-columns: 1fr; } }
+    .demand-card {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+    }
+    .demand-card:hover { border-color: var(--border-hi); }
+    .demand-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .demand-card-name { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--white); }
+    .demand-score-bar { height: 4px; border-radius: 2px; background: var(--bg-3); margin: 8px 0; }
+    .demand-score-fill { height: 100%; border-radius: 2px; }
+    .demand-card-desc { font-size: 12px; color: var(--text-3); line-height: 1.5; margin-bottom: 8px; }
+    .status-chip {
+      font-size: 10px; padding: 2px 8px; border-radius: 3px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-chip.strong { background: rgba(34,197,94,0.1); color: var(--green); }
+    .status-chip.partial { background: rgba(234,179,8,0.1); color: #eab308; }
+    .status-chip.weak { background: rgba(239,68,68,0.08); color: var(--red); }
+    .status-chip.none { background: rgba(239,68,68,0.12); color: var(--red); }
+    .demand-detail { font-size: 12px; color: var(--text-2); line-height: 1.5; margin-top: 8px; }
+    .demand-detail strong { color: var(--text); }
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .tab {
+      padding: 8px 16px; font-size: 13px; color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent;
+      background: none; border-top: none; border-left: none; border-right: none;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .survey-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .survey-stat:last-child { border-bottom: none; }
+    .survey-stat-label { color: var(--text-2); }
+    .survey-stat-value { color: var(--white); font-family: var(--font-mono); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
+    <nav>
+      <a href="/">Dashboard</a>
+      <a href="/competitors">Competitors</a>
+      <a href="/features" class="active">Feature Hunt</a>
+      <a href="/vchat">vChat</a>
+      <a href="/content">Content</a>
+      <a href="/settings">Settings</a>
+      <span class="nav-sep"></span>
+      <a href="/logout" class="logout">Log out</a>
+    </nav>
+  </div>
+  <div class="container">
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('hunt')">Feature Hunt</button>
+      <button class="tab" onclick="switchTab('demand')">Market Demand</button>
+    </div>
+
+    <div id="tab-hunt" class="tab-content active">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Feature Hunt</h2>
+        <button class="primary" onclick="runHunt()" id="huntBtn">Hunt Features</button>
+      </div>
+
+      <details class="sources-panel" id="sourcesPanel">
+        <summary>Sources — digital construction sites to scan</summary>
+        <div class="source-list" id="sourceList"></div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button onclick="addSource()">+ Add Source</button>
+          <button onclick="saveSources()">Save</button>
+        </div>
+      </details>
+
+      <div id="results"></div>
+    </div>
+
+    <div id="tab-demand" class="tab-content">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Market Demand — Onsight Survey Insights</h2>
+      </div>
+      <div id="demandContent"><div class="hunt-status">Loading survey insights...</div></div>
+    </div>
+
+  </div>
+
+  <script>
+    let sources = [];
+
+    async function checkAuth() {
+      const r = await fetch('/api/me');
+      if (r.status === 401) location.href = '/login';
+    }
+
+    // ── Tabs ──
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+      if (tab === 'demand') loadMarketDemand();
+    }
+
+    // ── Market Demand ──
+
+    let demandLoaded = false;
+    async function loadMarketDemand() {
+      if (demandLoaded) return;
+      try {
+        const r = await fetch('/api/market-demand');
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+        renderMarketDemand(data);
+        demandLoaded = true;
+      } catch (err) {
+        document.getElementById('demandContent').innerHTML =
+          '<div class="hunt-status" style="color:var(--red)">Failed to load: ' + esc(err.message) + '</div>';
+      }
+    }
+
+    function renderMarketDemand(data) {
+      const el = document.getElementById('demandContent');
+      const m = data.meta;
+      const demands = data.market_demands.sort((a, b) => b.demand_score - a.demand_score);
+
+      let h = '';
+
+      // Survey stats
+      h += '<div class="sources-panel" style="margin:16px 0">';
+      h += '<details open><summary>Survey overview — ' + m.respondents + ' respondents, ' + m.collection_period + '</summary>';
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">';
+
+      h += '<div>';
+      h += '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">Roles</div>';
+      for (const [role, count] of Object.entries(m.profiles.roles)) {
+        h += '<div class="survey-stat"><span class="survey-stat-label">' + esc(role) + '</span><span class="survey-stat-value">' + count + '</span></div>';
+      }
+      h += '</div>';
+
+      h += '<div>';
+      h += '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">Organizations</div>';
+      for (const [org, count] of Object.entries(m.profiles.organizations)) {
+        h += '<div class="survey-stat"><span class="survey-stat-label">' + esc(org) + '</span><span class="survey-stat-value">' + count + '</span></div>';
+      }
+      h += '</div>';
+      h += '</div></details></div>';
+
+      // CDE landscape
+      h += '<div class="sources-panel" style="margin:16px 0">';
+      h += '<details><summary>Tool landscape — CDEs and BIM tools in use</summary>';
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">';
+
+      h += '<div>';
+      h += '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">CDEs</div>';
+      for (const [cde, count] of Object.entries(data.tool_landscape.cdes).sort((a,b) => b[1]-a[1])) {
+        h += '<div class="survey-stat"><span class="survey-stat-label">' + esc(cde) + '</span><span class="survey-stat-value">' + count + '/' + m.respondents + '</span></div>';
+      }
+      h += '</div>';
+
+      h += '<div>';
+      h += '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">BIM Tools</div>';
+      for (const [tool, count] of Object.entries(data.tool_landscape.bim_tools).sort((a,b) => b[1]-a[1])) {
+        h += '<div class="survey-stat"><span class="survey-stat-label">' + esc(tool) + '</span><span class="survey-stat-value">' + count + '/' + m.respondents + '</span></div>';
+      }
+      h += '</div>';
+      h += '</div></details></div>';
+
+      // Demand cards
+      h += '<h2>Feature Demand Scoring</h2>';
+      h += '<div class="demand-grid">';
+      for (const d of demands) {
+        const statusClass = d.vitus_status;
+        const statusLabel = { strong: 'Vitus: Strong', partial: 'Vitus: Partial', weak: 'Vitus: Weak', none: 'Vitus: None' }[statusClass] || statusClass;
+        const barColor = d.demand_score >= 8 ? 'var(--green)' : d.demand_score >= 6 ? '#eab308' : 'var(--text-3)';
+        const barWidth = (d.demand_score / 10 * 100) + '%';
+
+        h += '<div class="demand-card">';
+        h += '<div class="demand-card-header">';
+        h += '<div class="demand-card-name">' + esc(d.name) + '</div>';
+        h += '<span class="demand-badge ' + (d.demand_score >= 8 ? 'high' : d.demand_score >= 6 ? 'medium' : 'low') + '">' + d.demand_score + '/10</span>';
+        h += '</div>';
+        h += '<div class="demand-score-bar"><div class="demand-score-fill" style="width:' + barWidth + ';background:' + barColor + '"></div></div>';
+        h += '<div class="demand-card-desc">' + esc(d.description) + '</div>';
+        h += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+        h += '<span class="status-chip ' + statusClass + '">' + statusLabel + '</span>';
+        h += '<span style="font-size:11px;color:var(--text-3)">' + d.mentions + ' mentions (' + Math.round(d.mention_rate * 100) + '% of respondents)</span>';
+        h += '</div>';
+        h += '<div class="demand-detail"><strong>Survey evidence:</strong> ' + esc(d.survey_evidence) + '</div>';
+        h += '<div class="demand-detail"><strong>Current capability:</strong> ' + esc(d.vitus_capability) + '</div>';
+        h += '<div class="demand-detail"><strong>Gap:</strong> ' + esc(d.gap) + '</div>';
+        h += '</div>';
+      }
+      h += '</div>';
+
+      el.innerHTML = h;
+    }
+
+    // ── Sources ──
+
+    async function loadSources() {
+      const r = await fetch('/api/features/sources');
+      sources = await r.json();
+      renderSources();
+    }
+
+    function renderSources() {
+      const el = document.getElementById('sourceList');
+      el.innerHTML = '';
+      sources.forEach((s, i) => {
+        const row = document.createElement('div');
+        row.className = 'source-row';
+        row.innerHTML = `
+          <input class="name" value="${esc(s.name)}" placeholder="Name" onchange="sources[${i}].name=this.value">
+          <input value="${esc(s.domain)}" placeholder="Domain or search term" onchange="sources[${i}].domain=this.value">
+          <button class="danger" onclick="sources.splice(${i},1);renderSources()">×</button>
+        `;
+        el.appendChild(row);
+      });
+    }
+
+    function addSource() {
+      sources.push({ name: '', domain: '' });
+      renderSources();
+      document.getElementById('sourcesPanel').open = true;
+    }
+
+    async function saveSources() {
+      await fetch('/api/features/sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sources),
+      });
+      renderSources();
+    }
+
+    // ── Hunt ──
+
+    let lastHuntData = null;
+
+    async function runHunt() {
+      const btn = document.getElementById('huntBtn');
+      const el = document.getElementById('results');
+      btn.disabled = true;
+      btn.textContent = 'Scanning...';
+      el.innerHTML = '<div class="hunt-status">Scanning ' + sources.length + ' sources for new features...</div>';
+
+      try {
+        const r = await fetch('/api/features/hunt');
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+        lastHuntData = data;
+        renderResults(data, true);
+      } catch (err) {
+        el.innerHTML = '<div class="hunt-status" style="color:var(--red)">Failed: ' + esc(err.message) + '</div>';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Hunt Features';
+    }
+
+    async function saveHuntResults() {
+      if (!lastHuntData) return;
+      try {
+        await fetch('/api/features/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(lastHuntData),
+        });
+        const btn = document.getElementById('saveBtn');
+        if (btn) { btn.textContent = 'Saved'; btn.disabled = true; setTimeout(() => { btn.textContent = 'Save Results'; btn.disabled = false; }, 2000); }
+      } catch (err) {
+        alert('Save failed: ' + err.message);
+      }
+    }
+
+    async function loadSavedResults() {
+      try {
+        const r = await fetch('/api/features/saved');
+        const data = await r.json();
+        if (data && data.features && data.features.length) {
+          lastHuntData = data;
+          renderResults(data, false);
+        }
+      } catch {}
+    }
+
+    function renderResults(data, showSave) {
+      const el = document.getElementById('results');
+      if (!data.features || data.features.length === 0) {
+        el.innerHTML = '<div class="hunt-status">No new features found across sources.</div>';
+        return;
+      }
+
+      let h = '';
+      if (data.evaluationError) {
+        const isRateLimit = data.evaluationError.includes('rate_limit') || data.evaluationError.includes('429');
+        const isAuthError = data.evaluationError.includes('API_KEY') || data.evaluationError.includes('authentication') || data.evaluationError.includes('401');
+        h += '<div style="background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px;color:var(--text-3)">';
+        if (isRateLimit) {
+          h += 'Vitus comparison skipped (rate limited). Features shown without evaluation.';
+        } else if (isAuthError) {
+          h += 'Add ANTHROPIC_API_KEY in <a href="/settings">Settings</a> to enable Vitus product comparison.';
+        } else {
+          h += esc(data.evaluationError);
+        }
+        h += '</div>';
+      }
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">';
+      h += '<h2 style="margin:0">Results — ' + data.features.length + ' features found</h2>';
+      h += '<div style="display:flex;gap:8px;align-items:center">';
+      if (data.fetchedAt) {
+        h += '<span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">' + new Date(data.fetchedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) + '</span>';
+      }
+      if (showSave) {
+        h += '<button id="saveBtn" onclick="saveHuntResults()" style="font-size:12px">Save Results</button>';
+      }
+      h += '</div></div>';
+
+      for (const f of data.features) {
+        const evalClass = f.evaluation?.type === 'threat' ? 'threat' :
+                          f.evaluation?.type === 'opportunity' ? 'opportunity' : 'neutral';
+        h += '<div class="feature-card">';
+        h += '<div class="feature-header">';
+        h += '<div class="feature-title">' + esc(f.title) + '</div>';
+        h += '<div class="feature-source">' + esc(f.source) + '</div>';
+        h += '</div>';
+        if (f.description) {
+          h += '<div class="feature-desc">' + esc(f.description) + '</div>';
+        }
+        if (f.url) {
+          h += '<div class="feature-url"><a href="' + esc(f.url) + '" target="_blank">' + esc(f.url) + '</a></div>';
+        }
+        if (f.evaluation) {
+          h += '<div class="eval ' + evalClass + '">';
+          h += '<div style="display:flex;justify-content:space-between;align-items:center">';
+          h += '<div class="eval-type ' + evalClass + '">' + esc(f.evaluation.type) + '</div>';
+          if (f.evaluation.market_demand) {
+            const demandClass = f.evaluation.market_demand >= 8 ? 'high' : f.evaluation.market_demand >= 6 ? 'medium' : 'low';
+            h += '<span class="demand-badge ' + demandClass + '">Market demand: ' + f.evaluation.market_demand + '/10</span>';
+          }
+          h += '</div>';
+          h += '<div class="eval-vitus">' + esc(f.evaluation.analysis) + '</div>';
+          if (f.evaluation.demand_match) {
+            h += '<div class="demand-tags">';
+            const matches = Array.isArray(f.evaluation.demand_match) ? f.evaluation.demand_match : [f.evaluation.demand_match];
+            for (const m of matches) {
+              h += '<span class="demand-tag">' + esc(m) + '</span>';
+            }
+            h += '</div>';
+          }
+          h += '</div>';
+        }
+        h += '</div>';
+      }
+
+      el.innerHTML = h;
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function init() {
+      await checkAuth();
+      await Promise.all([loadSources(), loadSavedResults()]);
+    }
+    init();
+  </script>
+</body>
+</html>

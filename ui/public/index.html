@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="stylesheet" href="/brand.css">
+<title>Bonaparte</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+  *{margin:0;padding:0;box-sizing:border-box}
+
+  :root{
+    --black:#0a0a10;
+    --gu:16px;
+  }
+
+  body{
+    font-family:var(--font-body);
+    background:var(--black);
+    color:var(--text);
+    font-size:12px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  ::selection{background:var(--accent);color:var(--black)}
+
+  /* ── Strict 8-col grid shell ── */
+  .shell{
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    gap:var(--gu);
+    max-width:1680px;
+    margin:0 auto;
+    padding:calc(var(--gu)*1.5) calc(var(--gu)*2);
+  }
+
+  .span-8{grid-column:span 8}
+  .span-4{grid-column:span 4}
+  .span-3{grid-column:span 3}
+  .span-2{grid-column:span 2}
+
+  /* ── Dashboard Header (below nav) ── */
+  .header{
+    grid-column:span 8;
+    display:flex;justify-content:space-between;align-items:center;
+    padding-bottom:calc(var(--gu)*1.5);
+    border-bottom:1px solid var(--border);
+  }
+
+  .brand{display:flex;align-items:baseline;gap:16px}
+
+  .brand-name{
+    font-family:var(--font-head);
+    font-size:15px;font-weight:600;color:var(--white);
+    letter-spacing:4px;text-transform:uppercase;
+  }
+
+  .brand-tag{font-family:var(--font-body);font-size:11px;color:var(--text-3);letter-spacing:1px}
+
+  .header-r{
+    display:flex;align-items:center;gap:20px;
+    font-family:var(--font-mono);font-size:10px;color:var(--text-3);
+  }
+
+  .dot{
+    width:5px;height:5px;background:var(--green);border-radius:50%;
+    display:inline-block;margin-right:6px;
+    box-shadow:0 0 4px var(--green);
+    animation:pulse 3s ease infinite;
+  }
+
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ── Metrics: 6 cells inside 8-col grid ── */
+  .metrics{
+    grid-column:span 8;
+    display:grid;grid-template-columns:repeat(6,1fr);gap:var(--gu);
+  }
+
+  .m{
+    background:var(--bg-1);
+    border:1px solid var(--border);
+    padding:calc(var(--gu)*1.25) calc(var(--gu)*1.5);
+  }
+
+  .m-val{
+    font-family:var(--font-head);
+    font-size:34px;font-weight:700;color:var(--white);
+    line-height:1;letter-spacing:-1px;
+  }
+
+  .m-val.orange{color:var(--accent)}
+  .m-val.green{color:var(--green)}
+  .m-val.amber{color:var(--amber)}
+
+  .m{position:relative;cursor:default}
+  .m[title]:hover::after{
+    content:attr(title);
+    position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    background:var(--bg-4);color:var(--text-1);
+    font-family:var(--font-body);font-size:11px;font-weight:400;
+    padding:6px 12px;border-radius:6px;white-space:nowrap;z-index:10;
+    border:1px solid var(--border-hi);
+    pointer-events:none;
+  }
+  .m[title]:hover::before{
+    content:'';position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+    border:5px solid transparent;border-top-color:var(--bg-4);z-index:10;
+  }
+
+  .m-lbl{
+    font-family:var(--font-mono);
+    font-size:9px;color:var(--text-2);text-transform:uppercase;
+    letter-spacing:2px;margin-top:10px;
+  }
+
+  /* ── Panels ── */
+  .p{
+    background:var(--bg-1);
+    border:1px solid var(--border);
+    overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+
+  .p-h{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:calc(var(--gu)*0.75) calc(var(--gu));
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+
+  .p-t{
+    font-family:var(--font-mono);
+    font-size:9px;text-transform:uppercase;letter-spacing:3px;
+    color:var(--text-2);font-weight:500;
+  }
+
+  .p-badge{
+    font-family:var(--font-mono);font-size:9px;
+    padding:2px 8px;color:var(--text-3);
+    border:1px solid var(--border-hi);
+  }
+
+  .p-b{padding:var(--gu);flex:1;overflow:hidden}
+  .p-scroll{overflow-y:auto;max-height:380px}
+
+  /* ── Tables ── */
+  table{width:100%;border-collapse:collapse}
+
+  th{
+    text-align:left;
+    font-family:var(--font-mono);
+    font-size:9px;text-transform:uppercase;letter-spacing:1.5px;
+    color:var(--text-3);padding:8px 12px;
+    border-bottom:1px solid var(--border);font-weight:500;
+  }
+
+  td{padding:8px 12px;font-size:11px;border-bottom:1px solid var(--border);color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,0.02)}
+
+  /* ── Score bars ── */
+  .sbar{display:flex;align-items:center;gap:10px}
+  .sbar-t{flex:1;height:2px;background:var(--bg-3);overflow:hidden}
+  .sbar-f{height:100%;transition:width .8s cubic-bezier(.16,1,.3,1)}
+  .sbar-v{
+    font-family:var(--font-mono);
+    font-size:12px;font-weight:700;min-width:30px;text-align:right;
+  }
+
+  /* ── Tags ── */
+  .tag{
+    display:inline-block;font-family:var(--font-mono);
+    padding:2px 8px;font-size:9px;font-weight:600;letter-spacing:.5px;
+  }
+  .tag-3{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-mid)}
+  .tag-2{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(234,179,8,.15)}
+  .tag-1{background:var(--bg-3);color:var(--text-3);border:1px solid var(--border-hi)}
+
+  .w{color:var(--white)}
+  .g{color:var(--green)}
+  .a{color:var(--amber)}
+  .r{color:var(--red)}
+  .o{color:var(--accent)}
+  .d{color:var(--text-3)}
+  .dd{color:var(--text-4)}
+  .mono{font-family:var(--font-mono)}
+  .b{font-weight:700}
+
+  /* ── Heatmap ── */
+  .hm{display:grid;grid-template-columns:110px repeat(6,1fr);gap:2px}
+
+  .hm-h{
+    font-family:var(--font-mono);font-size:8px;
+    text-transform:uppercase;letter-spacing:.5px;color:var(--text-3);
+    text-align:center;padding:6px 2px;
+  }
+
+  .hm-l{font-size:11px;font-weight:600;color:var(--text);padding:8px 10px;display:flex;align-items:center}
+
+  .hm-c{
+    font-family:var(--font-mono);font-size:10px;font-weight:700;
+    text-align:center;padding:8px 2px;
+  }
+
+  .hm-hot{background:rgba(34,197,94,0.1);color:var(--green)}
+  .hm-on{background:rgba(255,255,255,0.04);color:var(--text-2)}
+  .hm-off{background:var(--bg);color:var(--text-4)}
+
+  /* ── Funnel ── */
+  .fn{display:flex;flex-direction:column;gap:8px}
+  .fn-r{display:flex;align-items:center;gap:12px}
+  .fn-l{
+    width:84px;text-align:right;font-family:var(--font-mono);
+    font-size:9px;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;
+  }
+  .fn-t{flex:1;height:24px;background:var(--bg);overflow:hidden}
+  .fn-b{
+    height:100%;display:flex;align-items:center;padding-left:10px;
+    font-family:var(--font-mono);font-size:11px;font-weight:700;
+    color:var(--white);transition:width 1s cubic-bezier(.16,1,.3,1);
+  }
+  .fn-n{font-family:var(--font-mono);font-size:11px;color:var(--text-2);min-width:30px;text-align:right}
+
+  /* ── Tier chart ── */
+  .tc{display:flex;align-items:flex-end;gap:var(--gu);height:140px;padding-top:10px}
+  .tc-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+  .tc-n{font-family:var(--font-head);font-size:22px;font-weight:800;margin-bottom:8px}
+  .tc-bar{width:100%;min-height:2px;transition:height 1s cubic-bezier(.16,1,.3,1)}
+  .tc-l{font-family:var(--font-mono);font-size:8px;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-top:10px}
+
+  /* ── Source bars ── */
+  .sr{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .sr-l{width:76px;font-family:var(--font-mono);font-size:9px;color:var(--text-2);text-align:right;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sr-t{flex:1;height:8px;background:var(--bg);overflow:hidden}
+  .sr-b{height:100%;background:var(--white);opacity:.15;transition:width .8s ease}
+  .sr-n{font-family:var(--font-mono);font-size:9px;color:var(--text-3);min-width:24px;text-align:right}
+
+  /* ── Pilots pipeline ── */
+  .pilot-pipe{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+  .pilot-col{flex:1;min-width:160px}
+  .pilot-col-h{
+    font-family:var(--font-mono);font-size:8px;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--text-3);padding:6px 8px;margin-bottom:6px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .pilot-col-n{
+    background:var(--bg-3);font-family:var(--font-mono);font-size:9px;
+    padding:1px 6px;color:var(--text-2);
+  }
+  .pilot-card{
+    background:var(--bg);border:1px solid var(--border);padding:10px 12px;
+    margin-bottom:6px;transition:border-color .15s;cursor:default;
+  }
+  .pilot-card:hover{border-color:var(--border-hi)}
+  .pilot-name{font-size:12px;font-weight:600;color:var(--white);margin-bottom:4px}
+  .pilot-name a{color:inherit;text-decoration:none;border-bottom:1px dotted var(--text-4)}
+  .pilot-meta{font-family:var(--font-mono);font-size:9px;color:var(--text-3);display:flex;gap:10px}
+  .pilot-owner{color:var(--text-2)}
+  .pilot-amt{color:var(--green)}
+  .pilot-date{color:var(--amber)}
+  .pilot-stale{border-left:2px solid var(--red)}
+
+  /* ── Bulletin ── */
+  .bul{font-size:13px;line-height:1.9;color:var(--text)}
+  .bul strong{color:var(--white);font-weight:600}
+  .bul .bi{margin-bottom:6px}
+  .bul .arrow{color:var(--accent);margin-right:6px}
+
+  /* ── Loading ── */
+  .ld{color:var(--text-3);font-family:var(--font-mono);font-size:9px;padding:24px;text-align:center;letter-spacing:3px;text-transform:uppercase}
+  .ld::after{content:'';display:inline-block;width:8px;height:8px;border:1.5px solid var(--border-hi);border-top-color:var(--text-3);border-radius:50%;animation:sp .6s linear infinite;margin-left:10px;vertical-align:middle}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  ::-webkit-scrollbar{width:2px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border-hi)}
+
+  /* Panel chat button + menu */
+  .p-chat{
+    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+    background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;
+    color:var(--text-4);transition:all .15s;font-size:11px;padding:0;margin-left:6px;
+    position:relative;
+  }
+  .p-chat:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+  .p-chat svg{width:14px;height:14px}
+  .p-h-r{display:flex;align-items:center;gap:4px}
+
+  .chat-menu{
+    position:absolute;top:calc(100% + 6px);right:0;z-index:200;
+    background:var(--bg-2);border:1px solid var(--border-hi);border-radius:8px;
+    padding:6px 0;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+    display:none;
+  }
+  .chat-menu.open{display:block}
+  .chat-menu-item{
+    display:block;width:100%;text-align:left;padding:8px 14px;
+    font-size:12px;color:var(--text-2);background:none;border:none;
+    cursor:pointer;font-family:var(--font-body);line-height:1.4;
+  }
+  .chat-menu-item:hover{background:var(--bg-3);color:var(--white)}
+  .chat-menu-sep{height:1px;background:var(--border);margin:4px 0}
+  .chat-menu-head{
+    padding:6px 14px 4px;font-family:var(--font-mono);font-size:8px;
+    color:var(--text-4);text-transform:uppercase;letter-spacing:1.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
+  <nav>
+    <a href="/" class="active">Dashboard</a>
+    <a href="/competitors">Competitors</a>
+    <a href="/features">Feature Hunt</a>
+    <a href="/vchat">vChat</a>
+    <a href="/content">Content</a>
+    <a href="/settings">Settings</a>
+    <span class="nav-sep"></span>
+    <a href="/logout" class="logout">Log out</a>
+  </nav>
+</div>
+
+<div class="shell">
+
+  <div class="header">
+    <div class="brand">
+      <img src="/logo.png" alt="" style="height:22px;opacity:.85;margin-right:4px">
+      <div class="brand-name">Bonaparte</div>
+      <div class="brand-tag">Strategic Intelligence</div>
+    </div>
+    <div class="header-r">
+      <span><span class="dot"></span>live</span>
+      <span id="ts"></span>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="m" title="Total HubSpot contacts with Vitus engagement tracking"><div class="m-val" id="m-c">---</div><div class="m-lbl">Contacts</div></div>
+    <div class="m" title="Average Vitus engagement score across all contacts (max 9)"><div class="m-val green" id="m-s">---</div><div class="m-lbl">Avg Score</div></div>
+    <div class="m" title="Percentage of contacts scoring 7+ (Tier 1 = power users)"><div class="m-val" id="m-t">---</div><div class="m-lbl">Tier 1 Rate</div></div>
+    <div class="m" title="Active SIGNAL nodes in Bonaparte memory (score 1-3)"><div class="m-val orange" id="m-si">---</div><div class="m-lbl">Active Signals</div></div>
+    <div class="m" title="Open deals in Vitus pipeline (excludes Closed Won/Lost)"><div class="m-val" id="m-d">---</div><div class="m-lbl">Open Deals</div></div>
+    <div class="m" title="Deals currently in Pilot/Trial stage"><div class="m-val orange" id="m-pi">---</div><div class="m-lbl">Pilots</div></div>
+  </div>
+
+  <!-- Row 1: Bulletin + Signals (4+4) -->
+  <div class="p span-4"><div class="p-h"><div class="p-t">Current Bulletin</div><div class="p-h-r"><button class="p-chat" onclick="chatPanel('bulletin',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b" id="bulletin"><div class="ld">Loading</div></div></div>
+  <div class="p span-4"><div class="p-h"><div class="p-t">Active Signals</div><div class="p-h-r"><div class="p-badge" id="sn">0</div><button class="p-chat" onclick="chatPanel('signals',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b p-scroll" id="signals"><div class="ld">Loading</div></div></div>
+
+  <!-- Row 2: Account Health + Feature Adoption (4+4) -->
+  <div class="p span-4"><div class="p-h"><div class="p-t">Account Health</div><div class="p-h-r"><button class="p-chat" onclick="chatPanel('accounts',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b p-scroll" id="acc"><div class="ld">Loading</div></div></div>
+  <div class="p span-4"><div class="p-h"><div class="p-t">Feature Adoption</div><div class="p-h-r"><button class="p-chat" onclick="chatPanel('features',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b" id="feat"><div class="ld">Loading</div></div></div>
+
+  <!-- Row 3: Purgatory + Tiers + Sources (3+3+2) -->
+  <div class="p span-3"><div class="p-h"><div class="p-t">Purgatory Pipeline</div><div class="p-h-r"><button class="p-chat" onclick="chatPanel('purgatory',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b" id="purg"><div class="ld">Loading</div></div></div>
+  <div class="p span-3"><div class="p-h"><div class="p-t">Tier Distribution</div><div class="p-h-r"><button class="p-chat" onclick="chatPanel('tiers',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b" id="tier"><div class="ld">Loading</div></div></div>
+  <div class="p span-2"><div class="p-h"><div class="p-t">Traffic Sources</div><div class="p-h-r"><button class="p-chat" onclick="chatPanel('sources',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b" id="src"><div class="ld">Loading</div></div></div>
+
+  <!-- Row 4: Pilots Pipeline -->
+  <div class="p span-8"><div class="p-h"><div class="p-t">Pilots Pipeline</div><div class="p-h-r"><div class="p-badge" id="pilotn">0 pilots</div><button class="p-chat" onclick="chatPanel('pilots',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b" id="pilots" style="overflow-x:auto"><div class="ld">Loading</div></div></div>
+
+  <!-- Row 5: Champions + Churn (4+4) -->
+  <div class="p span-4"><div class="p-h"><div class="p-t">Champion Candidates</div><div class="p-h-r"><div class="p-badge">Score 7+</div><button class="p-chat" onclick="chatPanel('champions',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b p-scroll" id="champ"><div class="ld">Loading</div></div></div>
+  <div class="p span-4"><div class="p-h"><div class="p-t">Churn Risk</div><div class="p-h-r"><div class="p-badge">No login 14d+</div><button class="p-chat" onclick="chatPanel('churn',event)" title="Chat about this"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div></div><div class="p-b p-scroll" id="churn"><div class="ld">Loading</div></div></div>
+
+
+</div>
+
+<script>
+const sc=s=>s>=7?'var(--green)':s>=3?'var(--amber)':s>=1?'var(--red)':'var(--text-4)';
+const tc=t=>t===1?'g':t===2?'a':t===3?'r':'dd';
+const ago=d=>{if(!d)return'never';const x=Math.floor((Date.now()-new Date(d))/864e5);return x<1?'today':x+'d'};
+
+function renderMetrics(N,C,D,P){
+  const sigs=N.filter(n=>n.type==='SIGNAL'&&n.status==='active');
+  const openDeals=D.filter(d=>d.dealstage!=='closedwon'&&d.dealstage!=='closedlost');
+  document.getElementById('m-c').textContent=C.length;
+  document.getElementById('m-s').textContent=C.length?(C.reduce((s,c)=>s+c.score,0)/C.length).toFixed(1):'0';
+  const t1=C.filter(c=>c.tier===1).length;
+  const t1p=C.length?Math.round(t1/C.length*100):0;
+  const te=document.getElementById('m-t');
+  te.textContent=t1p+'%';
+  te.className='m-val '+(t1p>=50?'green':'amber');
+  document.getElementById('m-si').textContent=sigs.length;
+  document.getElementById('m-d').textContent=openDeals.length;
+  document.getElementById('m-pi').textContent=P.length;
+}
+
+function renderBulletin(N){
+  const el=document.getElementById('bulletin');
+  const s3=N.filter(n=>n.type==='SIGNAL'&&n.score===3&&n.status==='active');
+  const pats=N.filter(n=>n.type==='PATTERN'&&n.status==='active');
+  const stale=N.filter(n=>n.status==='stale');
+  let h='<div class="bul">';
+  if(s3.length){h+='<div class="bi"><strong>Act this week</strong></div>';s3.forEach(s=>{h+='<div class="bi"><span class="arrow">&#9656;</span>'+s.description+'</div>'});}
+  if(pats.length){h+='<div class="bi"><strong>Patterns</strong></div>';pats.forEach(p=>{h+='<div class="bi"><span class="arrow">&#9656;</span>'+p.description+'</div>'});}
+  if(stale.length)h+='<div class="bi a">'+stale.length+' stale node(s) need attention</div>';
+  if(!s3.length&&!pats.length&&!stale.length)h+='<div class="d">No urgent signals. Steady state.</div>';
+  h+='</div>';el.innerHTML=h;
+}
+
+function renderSignals(N){
+  const S=N.filter(n=>n.type==='SIGNAL'&&n.status==='active').sort((a,b)=>b.score-a.score);
+  document.getElementById('sn').textContent=S.length;
+  const el=document.getElementById('signals');
+  if(!S.length){el.innerHTML='<div class="d">No active signals</div>';return}
+  let h='<table><tr><th></th><th>Signal</th><th>Tags</th><th>Deadline</th></tr>';
+  S.forEach(s=>{
+    const t=s.score===3?'tag-3':s.score===2?'tag-2':'tag-1';
+    h+='<tr><td><span class="tag '+t+'">'+s.score+'</span></td>';
+    h+='<td>'+s.description.slice(0,100)+(s.description.length>100?'...':'')+'</td>';
+    h+='<td>'+s.tags.slice(0,2).map(t=>'<span class="d">'+t+'</span>').join(' ')+'</td>';
+    h+='<td class="mono d">'+(s.deadline||'--')+'</td></tr>';
+  });
+  h+='</table>';el.innerHTML=h;
+}
+
+function renderAccounts(C){
+  const el=document.getElementById('acc');
+  const by={};C.forEach(c=>{const co=c.company||'Unknown';(by[co]=by[co]||[]).push(c)});
+  const A=Object.entries(by).map(([n,cs])=>({n,cnt:cs.length,avg:cs.reduce((s,c)=>s+c.score,0)/cs.length,t1:Math.round(cs.filter(c=>c.tier===1).length/cs.length*100)})).filter(a=>a.cnt>=2).sort((a,b)=>b.avg-a.avg).slice(0,15);
+  let h='<table><tr><th>Account</th><th>N</th><th>Score</th><th>T1</th></tr>';
+  A.forEach(a=>{
+    const p=Math.round(a.avg/9*100);const c=sc(a.avg);
+    const hsq=encodeURIComponent(a.n);
+    h+='<tr><td class="w b"><a href="https://app-eu1.hubspot.com/contacts/146127203/objects/0-2/views/all/list?query='+hsq+'" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--text-4)">'+a.n+'</a></td><td class="mono d">'+a.cnt+'</td>';
+    h+='<td><div class="sbar"><div class="sbar-t"><div class="sbar-f" style="width:'+p+'%;background:'+c+'"></div></div><span class="sbar-v" style="color:'+c+'">'+a.avg.toFixed(1)+'</span></div></td>';
+    h+='<td class="mono '+tc(a.t1>=50?1:a.t1>=25?2:3)+'">'+a.t1+'%</td></tr>';
+  });
+  h+='</table>';el.innerHTML=h;
+}
+
+function renderFeatures(C){
+  const el=document.getElementById('feat');
+  const F=['dashboards','properties','savedViews','displayFilter','sketch','colorize'];
+  const L=['Dash','Props','Views','Filter','Sketch','Color'];
+  const P=[2,2,2,1,1,1];
+  const by={};C.forEach(c=>{const co=c.company||'?';(by[co]=by[co]||[]).push(c)});
+  const A=Object.entries(by).filter(([,cs])=>cs.length>=2).sort((a,b)=>b[1].length-a[1].length).slice(0,8);
+  let h='<div class="hm"><div class="hm-h"></div>';
+  L.forEach((l,i)=>{h+='<div class="hm-h">'+l+'<br><span style="color:var(--text-4)">'+P[i]+'pt</span></div>'});
+  A.forEach(([name,cs])=>{
+    h+='<div class="hm-l">'+name.slice(0,13)+'</div>';
+    F.forEach(f=>{
+      const r=Math.round(cs.filter(c=>c.achievements[f]).length/cs.length*100);
+      h+='<div class="hm-c '+(r>=70?'hm-hot':r>15?'hm-on':'hm-off')+'">'+r+'%</div>';
+    });
+  });
+  h+='</div>';el.innerHTML=h;
+}
+
+function renderPurgatory(C){
+  const el=document.getElementById('purg');
+  const S=['discovering','warming','qualifying','champion','dead'];
+  const X=['var(--text-3)','var(--amber)','var(--white)','var(--green)','var(--red)'];
+  const V=S.map(s=>C.filter(c=>c.purgatory===s).length);
+  const mx=Math.max(...V,1);
+  let h='<div class="fn">';
+  S.forEach((s,i)=>{
+    h+='<div class="fn-r"><div class="fn-l">'+s+'</div><div class="fn-t"><div class="fn-b" style="width:'+Math.max(4,V[i]/mx*100)+'%;background:'+X[i]+';opacity:.2">'+(V[i]||'')+'</div></div><div class="fn-n">'+V[i]+'</div></div>';
+  });
+  h+='</div>';el.innerHTML=h;
+}
+
+function renderTiers(C){
+  const el=document.getElementById('tier');
+  const T=[
+    {l:'Tier 1',n:C.filter(c=>c.tier===1).length,c:'var(--green)'},
+    {l:'Tier 2',n:C.filter(c=>c.tier===2).length,c:'var(--amber)'},
+    {l:'Tier 3',n:C.filter(c=>c.tier===3).length,c:'var(--red)'},
+    {l:'Inactive',n:C.filter(c=>c.tier===0).length,c:'var(--text-3)'},
+  ];
+  const mx=Math.max(...T.map(x=>x.n),1);
+  let h='<div class="tc">';
+  T.forEach(t=>{
+    h+='<div class="tc-col"><div class="tc-n" style="color:'+t.c+'">'+t.n+'</div><div class="tc-bar" style="height:'+t.n/mx*100+'%;background:'+t.c+';opacity:.3"></div><div class="tc-l">'+t.l+'</div></div>';
+  });
+  h+='</div>';el.innerHTML=h;
+}
+
+function renderSources(C){
+  const el=document.getElementById('src');
+  const s={};C.forEach(c=>{const k=c.source||'unknown';s[k]=(s[k]||0)+1});
+  const sorted=Object.entries(s).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const mx=sorted[0]?.[1]||1;
+  let h='';
+  sorted.forEach(([n,c])=>{
+    h+='<div class="sr"><div class="sr-l">'+n.slice(0,12)+'</div><div class="sr-t"><div class="sr-b" style="width:'+c/mx*100+'%"></div></div><div class="sr-n">'+c+'</div></div>';
+  });
+  el.innerHTML=h||'<div class="d">No data</div>';
+}
+
+function renderChampions(C){
+  const el=document.getElementById('champ');
+  const ch=C.filter(c=>c.tier===1).sort((a,b)=>b.score-a.score).slice(0,15);
+  if(!ch.length){el.innerHTML='<div class="d">No Tier 1 contacts</div>';return}
+  let h='<table><tr><th>Contact</th><th>Company</th><th>Score</th><th>Features</th><th>Login</th></tr>';
+  ch.forEach(c=>{
+    const fc=Object.values(c.achievements).filter(Boolean).length;
+    h+='<tr><td class="w" style="font-weight:500"><a href="'+c.url+'" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--text-4)">'+c.name+'</a></td><td class="d">'+c.company.slice(0,20)+'</td>';
+    h+='<td class="mono g b">'+c.score+'<span class="dd">/9</span></td>';
+    h+='<td class="mono">'+fc+'<span class="dd">/6</span></td>';
+    h+='<td class="mono d">'+ago(c.lastLogin)+'</td></tr>';
+  });
+  h+='</table>';el.innerHTML=h;
+}
+
+function renderChurn(C){
+  const el=document.getElementById('churn');
+  const now=Date.now(),th=14*864e5;
+  const R=C.filter(c=>c.score>0&&(!c.lastLogin||(now-new Date(c.lastLogin))>th)).sort((a,b)=>(a.lastLogin?new Date(a.lastLogin).getTime():0)-(b.lastLogin?new Date(b.lastLogin).getTime():0)).slice(0,15);
+  if(!R.length){el.innerHTML='<div class="g">No churn risk</div>';return}
+  let h='<table><tr><th>Contact</th><th>Company</th><th>Score</th><th>Last Login</th></tr>';
+  R.forEach(c=>{
+    const d=c.lastLogin?Math.floor((now-new Date(c.lastLogin))/864e5):'?';
+    h+='<tr><td><a href="'+c.url+'" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--text-4)">'+c.name+'</a></td><td class="d">'+c.company.slice(0,20)+'</td>';
+    h+='<td class="mono">'+c.score+'<span class="dd">/9</span></td>';
+    h+='<td class="mono '+(d==='?'||d>30?'r':'a')+'">'+(c.lastLogin?d+'d':'never')+'</td></tr>';
+  });
+  h+='</table>';el.innerHTML=h;
+}
+
+const OWNERS={'31176904':'Bram','30235134':'Josephine','29290715':'Casper','79783610':'Bertrand','49882854':'Stine'};
+
+function renderPilots(deals){
+  const el=document.getElementById('pilots');
+  // Group by pipeline, then by stage within each pipeline
+  // Show all deals in a Kanban-style view grouped by dealstage
+  const stages={};
+  deals.forEach(d=>{
+    const s=d.dealstage||'unknown';
+    (stages[s]=stages[s]||[]).push(d);
+  });
+
+  const stageOrder=Object.keys(stages);
+  document.getElementById('pilotn').textContent=deals.length+' pilot'+(deals.length!==1?'s':'');
+
+  if(!deals.length){el.innerHTML='<div class="d">No pilots in pipeline</div>';return}
+
+  const now=Date.now();
+  let h='<div class="pilot-pipe">';
+  stageOrder.forEach(stage=>{
+    const cards=stages[stage];
+    h+='<div class="pilot-col">';
+    h+='<div class="pilot-col-h">'+stage.replace(/_/g,' ')+'<span class="pilot-col-n">'+cards.length+'</span></div>';
+    cards.forEach(d=>{
+      const daysSinceUpdate=d.lastmodifieddate?Math.floor((now-new Date(d.lastmodifieddate))/864e5):null;
+      const stale=daysSinceUpdate!==null&&daysSinceUpdate>14;
+      const owner=OWNERS[d.hubspot_owner_id]||'Unassigned';
+      const close=d.closedate?new Date(d.closedate).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'';
+      const amt=d.amount?Number(d.amount).toLocaleString('da-DK'):'';
+      h+='<div class="pilot-card'+(stale?' pilot-stale':'')+'">';
+      h+='<div class="pilot-name"><a href="'+d.url+'" target="_blank">'+d.dealname+'</a></div>';
+      h+='<div class="pilot-meta">';
+      h+='<span class="pilot-owner">'+owner+'</span>';
+      if(amt)h+='<span class="pilot-amt">'+amt+'</span>';
+      if(close)h+='<span class="pilot-date">'+close+'</span>';
+      h+='</div>';
+      if(stale)h+='<div class="pilot-meta" style="margin-top:4px"><span style="color:var(--red)">'+daysSinceUpdate+'d stale</span></div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+// Panel data cache for chat context
+let _panelData={N:[],C:[],D:[],P:[]};
+
+const PANEL_PROMPTS={
+  bulletin:[
+    'What should I prioritize based on the current bulletin?',
+    'Explain each bulletin item and who should own the action',
+    'What has changed since the last consolidation?',
+    'Are there any contradictions between current signals and facts?',
+    'Write me a 3-line summary I can paste into Slack for the team',
+  ],
+  signals:[
+    'Which signals need immediate action and why?',
+    'Rank all active signals by urgency and suggest next steps for each',
+    'Which signals are about to go stale? What do I do before they decay?',
+    'Are there any patterns across these signals I am missing?',
+    'Which signals should Josephine handle vs which are mine?',
+  ],
+  accounts:[
+    'Which accounts need attention and what should I do?',
+    'Compare the top 5 accounts: who is growing, who is flat, who is cooling?',
+    'Which accounts have high contact count but low avg score? That is a red flag.',
+    'Where is the biggest gap between account size and Tier 1 rate?',
+    'Draft a one-line status for each top account I can use in a standup',
+    'Which account is most ready for an enterprise conversation?',
+  ],
+  features:[
+    'Which feature gaps should I focus on for adoption?',
+    'Which accounts have low dashboard adoption? That is our core value prop.',
+    'Compare feature adoption: which features are underused across the board?',
+    'Which accounts use properties but not dashboards? They are missing the point.',
+    'What is the correlation between feature adoption and engagement score?',
+    'Which account would benefit most from a feature walkthrough?',
+  ],
+  purgatory:[
+    'Which contacts are stuck in the pipeline and how do I move them?',
+    'How many contacts are in each purgatory stage and is the funnel healthy?',
+    'Which contacts have been in "discovering" for too long?',
+    'Who is ready to move from warming to qualifying? What evidence supports it?',
+    'Are there any champion-eligible contacts still stuck in qualifying?',
+  ],
+  tiers:[
+    'What does the tier distribution tell me about user engagement?',
+    'Is the Tier 1 rate improving or declining compared to the baseline?',
+    'How many users moved between tiers recently?',
+    'What would it take to move 10 Tier 2 users to Tier 1?',
+    'Which Tier 3 users are worth targeting for activation?',
+  ],
+  sources:[
+    'What does the traffic source mix tell me?',
+    'Which source is producing the highest quality contacts by engagement score?',
+    'Are there underrepresented sources we should invest in?',
+  ],
+  pilots:[
+    'What is the status of active pilots and any risks?',
+    'Which pilots are stale and need a check-in this week?',
+    'Are any pilot close dates approaching? Who owns the next step?',
+    'Compare all pilots: which is most likely to convert and why?',
+    'Draft a status update for each pilot I can share with the team',
+  ],
+  champions:[
+    'Who are the best champion candidates and how should I engage them?',
+    'Which champions are at the biggest accounts? Those are strategic.',
+    'Who has score 9/9? What makes them a power user?',
+    'Draft a personal message to the top 3 champions thanking them for engagement',
+    'Which champion candidates have not been promoted in purgatory yet?',
+    'Are there any champions who could introduce us to other teams in their org?',
+  ],
+  churn:[
+    'Which contacts are at risk of churning and what should I do?',
+    'Who are the highest-scoring contacts that have gone quiet? Those hurt most.',
+    'Group churn risks by account: which accounts are losing multiple users?',
+    'How many days since last login for each at-risk contact?',
+    'Draft a friendly check-in message for the top 3 churn risks',
+    'Are there any patterns in why users go quiet? Same account, same role, same timing?',
+  ],
+};
+
+function getPanelContext(panel){
+  const {N,C,D,P}=_panelData;
+  switch(panel){
+    case 'bulletin':{
+      const s3=N.filter(n=>n.type==='SIGNAL'&&n.score===3&&n.status==='active');
+      const pats=N.filter(n=>n.type==='PATTERN'&&n.status==='active');
+      const stale=N.filter(n=>n.status==='stale');
+      return `Priority signals: ${s3.map(s=>s.description).join('; ')}\nPatterns: ${pats.map(p=>p.description).join('; ')}\nStale items: ${stale.length}`;
+    }
+    case 'signals':{
+      const S=N.filter(n=>n.type==='SIGNAL'&&n.status==='active').sort((a,b)=>b.score-a.score);
+      return S.map(s=>`[${s.score}] ${s.description} (tags: ${s.tags.join(',')}, deadline: ${s.deadline||'none'})`).join('\n');
+    }
+    case 'accounts':{
+      const by={};C.forEach(c=>{const co=c.company||'Unknown';(by[co]=by[co]||[]).push(c)});
+      return Object.entries(by).filter(([,cs])=>cs.length>=2).sort((a,b)=>b[1].length-a[1].length).slice(0,20)
+        .map(([n,cs])=>{const avg=(cs.reduce((s,c)=>s+c.score,0)/cs.length).toFixed(1);const t1=Math.round(cs.filter(c=>c.tier===1).length/cs.length*100);return `${n}: ${cs.length} contacts, avg score ${avg}/9, ${t1}% Tier 1`}).join('\n');
+    }
+    case 'features':{
+      const F=['dashboards','properties','savedViews','displayFilter','sketch','colorize'];
+      const by={};C.forEach(c=>{const co=c.company||'?';(by[co]=by[co]||[]).push(c)});
+      return Object.entries(by).filter(([,cs])=>cs.length>=2).sort((a,b)=>b[1].length-a[1].length).slice(0,8)
+        .map(([name,cs])=>{const rates=F.map(f=>Math.round(cs.filter(c=>c.achievements[f]).length/cs.length*100));return `${name}: dash=${rates[0]}% props=${rates[1]}% views=${rates[2]}% filter=${rates[3]}% sketch=${rates[4]}% color=${rates[5]}%`}).join('\n');
+    }
+    case 'purgatory':{
+      const S=['discovering','warming','qualifying','champion','dead'];
+      return S.map(s=>`${s}: ${C.filter(c=>c.purgatory===s).length} contacts`).join('\n');
+    }
+    case 'tiers':{
+      return `Tier 1 (7-9): ${C.filter(c=>c.tier===1).length}\nTier 2 (3-6): ${C.filter(c=>c.tier===2).length}\nTier 3 (1-2): ${C.filter(c=>c.tier===3).length}\nInactive (0): ${C.filter(c=>c.tier===0).length}\nTotal: ${C.length}`;
+    }
+    case 'sources':{
+      const s={};C.forEach(c=>{const k=c.source||'unknown';s[k]=(s[k]||0)+1});
+      return Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([n,c])=>`${n}: ${c}`).join('\n');
+    }
+    case 'pilots':{
+      return P.map(d=>`${d.dealname}: stage=${d.dealstage}, amount=${d.amount||'?'}, close=${d.closedate||'?'}, owner=${OWNERS[d.hubspot_owner_id]||'?'}`).join('\n');
+    }
+    case 'champions':{
+      const ch=C.filter(c=>c.tier===1).sort((a,b)=>b.score-a.score).slice(0,15);
+      return ch.map(c=>`${c.name} (${c.company}): score ${c.score}/9, features ${Object.values(c.achievements).filter(Boolean).length}/6, last login ${ago(c.lastLogin)}`).join('\n');
+    }
+    case 'churn':{
+      const now=Date.now(),th=14*864e5;
+      const R=C.filter(c=>c.score>0&&(!c.lastLogin||(now-new Date(c.lastLogin))>th)).sort((a,b)=>(a.lastLogin?new Date(a.lastLogin).getTime():0)-(b.lastLogin?new Date(b.lastLogin).getTime():0)).slice(0,15);
+      return R.map(c=>`${c.name} (${c.company}): score ${c.score}/9, last login ${c.lastLogin?Math.floor((now-new Date(c.lastLogin))/864e5)+'d ago':'never'}`).join('\n');
+    }
+    default:return '';
+  }
+}
+
+let _openMenu=null;
+
+function chatPanel(panel,event){
+  event.stopPropagation();
+  // Close any open menu
+  if(_openMenu){_openMenu.remove();_openMenu=null}
+
+  const prompts=PANEL_PROMPTS[panel]||['Tell me about this data'];
+  const ctx=getPanelContext(panel);
+  const btn=event.currentTarget;
+
+  const menu=document.createElement('div');
+  menu.className='chat-menu open';
+  menu.innerHTML=prompts.map(q=>
+    '<button class="chat-menu-item">'+q+'</button>'
+  ).join('');
+
+  menu.querySelectorAll('.chat-menu-item').forEach((item,i)=>{
+    item.onclick=(e)=>{
+      e.stopPropagation();
+      const url='/vchat?context='+encodeURIComponent(panel)+'&data='+encodeURIComponent(ctx)+'&q='+encodeURIComponent(prompts[i]);
+      window.open(url,'_blank');
+      menu.remove();
+      _openMenu=null;
+    };
+  });
+
+  btn.appendChild(menu);
+  _openMenu=menu;
+}
+
+document.addEventListener('click',()=>{if(_openMenu){_openMenu.remove();_openMenu=null}});
+
+async function init(){
+  // Auth check
+  const me=await fetch('/api/me');
+  if(me.status===401){location.href='/login';return}
+
+  document.getElementById('ts').textContent=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  try{
+    const[N,C,D,P]=await Promise.all([fetch('/api/memory').then(r=>r.json()),fetch('/api/contacts/all').then(r=>r.json()),fetch('/api/deals').then(r=>r.json()),fetch('/api/pilots').then(r=>r.json())]);
+    _panelData={N,C,D,P};
+    renderMetrics(N,C,D,P);renderBulletin(N);renderSignals(N);renderAccounts(C);renderFeatures(C);renderPurgatory(C);renderTiers(C);renderSources(C);renderPilots(P);renderChampions(C);renderChurn(C);
+  }catch(e){document.getElementById('bulletin').innerHTML='<div class="r">'+e.message+'</div>'}
+}
+init();setInterval(init,3e5);
+</script>
+</body>
+</html>

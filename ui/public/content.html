@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="stylesheet" href="/brand.css">
+  <title>Bonaparte — Content</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    h2 { font-family: var(--font-head); font-size: 16px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
+    h2:first-child { margin-top: 0; }
+
+    button {
+      padding: 6px 14px; background: var(--bg-3); color: var(--text); border: 1px solid var(--border-hi);
+      border-radius: 4px; font-size: 12px; font-family: var(--font-body); cursor: pointer;
+    }
+    button:hover { background: var(--bg-4); }
+    button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    button.primary:hover { background: var(--v5); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .status-msg { color: var(--text-3); font-style: italic; padding: 24px 0; text-align: center; }
+
+    /* Filters */
+    .filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
+    .filter-btn {
+      padding: 4px 12px; background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: 6px; font-size: 11px; color: var(--text-3); cursor: pointer;
+    }
+    .filter-btn:hover { border-color: var(--border-hi); color: var(--text); }
+    .filter-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+    /* Sort */
+    .sort-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; font-size: 12px; color: var(--text-3); }
+    .sort-btn { background: none; border: none; color: var(--text-3); cursor: pointer; font-size: 12px; font-family: var(--font-body); padding: 2px 6px; }
+    .sort-btn:hover { color: var(--text); }
+    .sort-btn.active { color: var(--accent); font-weight: 600; }
+
+    /* Cards */
+    .ideas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+
+    .idea-card {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px; padding: 18px;
+      display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s;
+    }
+    .idea-card:hover { border-color: var(--border-hi); }
+    .idea-card.saved { border-left: 3px solid var(--accent); }
+
+    .idea-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .idea-title { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--white); line-height: 1.4; }
+
+    .idea-badges { display: flex; gap: 6px; flex-shrink: 0; }
+    .badge {
+      font-family: var(--font-mono); font-size: 10px; padding: 2px 8px; border-radius: 3px;
+      font-weight: 600; white-space: nowrap;
+    }
+    .badge-format { background: var(--bg-3); color: var(--text-2); border: 1px solid var(--border-hi); }
+
+    .idea-angle { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+    .idea-hook { font-size: 12px; color: var(--text-3); line-height: 1.5; padding: 8px 12px; background: var(--bg-2); border-radius: 6px; }
+    .idea-hook strong { color: var(--text-2); }
+    .idea-target { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+
+    .idea-scores { display: flex; gap: 16px; align-items: center; }
+    .score-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+    .score-label { color: var(--text-3); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .score-bar { width: 60px; height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 2px; }
+    .score-val { font-family: var(--font-mono); font-size: 12px; font-weight: 700; min-width: 20px; }
+
+    .idea-actions { display: flex; gap: 6px; margin-top: 2px; }
+    .idea-actions button { font-size: 11px; padding: 4px 10px; }
+
+    .cat-chip {
+      font-size: 9px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .cat-thought_leadership { background: rgba(99,102,241,0.1); color: #818cf8; }
+    .cat-product { background: rgba(34,197,94,0.1); color: var(--green); }
+    .cat-social_proof { background: rgba(234,179,8,0.1); color: #eab308; }
+    .cat-education { background: rgba(168,184,204,0.1); color: var(--v2); }
+    .cat-market_insight { background: rgba(232,159,156,0.1); color: var(--accent); }
+    .cat-competitive { background: rgba(239,68,68,0.08); color: var(--red); }
+
+    /* Saved section */
+    .saved-header { display: flex; justify-content: space-between; align-items: center; }
+    .saved-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
+    <nav>
+      <a href="/">Dashboard</a>
+      <a href="/competitors">Competitors</a>
+      <a href="/features">Feature Hunt</a>
+      <a href="/vchat">vChat</a>
+      <a href="/content" class="active">Content</a>
+      <a href="/settings">Settings</a>
+      <span class="nav-sep"></span>
+      <a href="/logout" class="logout">Log out</a>
+    </nav>
+  </div>
+  <div class="container">
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Content Ideas</h2>
+      <div style="display:flex;gap:8px">
+        <select id="catSelect" style="padding:5px 10px;background:var(--bg-3);color:var(--text);border:1px solid var(--border-hi);border-radius:4px;font-size:12px;font-family:var(--font-body)">
+          <option value="">All categories</option>
+          <option value="thought_leadership">Thought Leadership</option>
+          <option value="product">Product</option>
+          <option value="social_proof">Social Proof</option>
+          <option value="education">Education</option>
+          <option value="market_insight">Market Insight</option>
+          <option value="competitive">Competitive</option>
+        </select>
+        <button class="primary" onclick="generate()" id="genBtn">Generate Ideas</button>
+      </div>
+    </div>
+
+    <div class="filters" id="formatFilters"></div>
+
+    <div class="sort-bar">
+      Sort:
+      <button class="sort-btn active" onclick="setSort('value')">Value</button>
+      <button class="sort-btn" onclick="setSort('difficulty')">Difficulty</button>
+      <button class="sort-btn" onclick="setSort('roi')">ROI (value/difficulty)</button>
+      <button class="sort-btn" onclick="setSort('format')">Format</button>
+    </div>
+
+    <div id="savedSection" style="display:none">
+      <div class="saved-header">
+        <h2 style="margin:8px 0 12px">Saved Ideas</h2>
+        <span class="saved-count" id="savedCount"></span>
+      </div>
+      <div class="ideas-grid" id="savedGrid"></div>
+    </div>
+
+    <h2 id="generatedLabel" style="display:none">Generated Ideas</h2>
+    <div class="ideas-grid" id="ideasGrid"></div>
+    <div id="emptyState" class="status-msg">Click "Generate Ideas" to get marketing content suggestions based on your data.</div>
+
+  </div>
+
+  <script>
+    let allIdeas = [];
+    let savedIdeas = [];
+    let currentSort = 'value';
+    let activeFormats = new Set();
+
+    async function checkAuth() {
+      const r = await fetch('/api/me');
+      if (r.status === 401) location.href = '/login';
+    }
+
+    // ── Generate ──
+
+    async function generate() {
+      const btn = document.getElementById('genBtn');
+      const grid = document.getElementById('ideasGrid');
+      const empty = document.getElementById('emptyState');
+      const cat = document.getElementById('catSelect').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      if (empty) empty.style.display = 'none';
+      grid.innerHTML = '<div class="status-msg">Pulling data from HubSpot, memory, survey, competitors... generating ideas...</div>';
+
+      try {
+        const r = await fetch('/api/content/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: cat || null }),
+        });
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+        allIdeas = data.ideas || [];
+        renderFormatFilters();
+        renderIdeas();
+        document.getElementById('generatedLabel').style.display = '';
+      } catch (err) {
+        grid.innerHTML = '<div class="status-msg" style="color:var(--red)">Failed: ' + esc(err.message) + '</div>';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Generate Ideas';
+    }
+
+    // ── Sorting & Filtering ──
+
+    function setSort(s) {
+      currentSort = s;
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(s === 'roi' ? 'roi' : s)));
+      renderIdeas();
+    }
+
+    function toggleFormat(fmt) {
+      if (activeFormats.has(fmt)) activeFormats.delete(fmt);
+      else activeFormats.add(fmt);
+      renderFormatFilters();
+      renderIdeas();
+    }
+
+    function renderFormatFilters() {
+      const formats = [...new Set(allIdeas.map(i => i.format))].sort();
+      const el = document.getElementById('formatFilters');
+      el.innerHTML = formats.map(f =>
+        '<button class="filter-btn' + (activeFormats.has(f) ? ' active' : '') + '" onclick="toggleFormat(\'' + f + '\')">' + f.replace(/_/g, ' ') + '</button>'
+      ).join('');
+    }
+
+    function sortIdeas(ideas) {
+      return [...ideas].sort((a, b) => {
+        switch (currentSort) {
+          case 'value': return b.value - a.value;
+          case 'difficulty': return a.difficulty - b.difficulty;
+          case 'roi': return (b.value / Math.max(b.difficulty, 1)) - (a.value / Math.max(a.difficulty, 1));
+          case 'format': return (a.format || '').localeCompare(b.format || '');
+          default: return 0;
+        }
+      });
+    }
+
+    function filterIdeas(ideas) {
+      if (activeFormats.size === 0) return ideas;
+      return ideas.filter(i => activeFormats.has(i.format));
+    }
+
+    // ── Rendering ──
+
+    function renderIdeas() {
+      const grid = document.getElementById('ideasGrid');
+      const sorted = sortIdeas(filterIdeas(allIdeas));
+      if (!sorted.length && allIdeas.length) {
+        grid.innerHTML = '<div class="status-msg">No ideas match the current filter.</div>';
+        return;
+      }
+      grid.innerHTML = sorted.map((idea, i) => renderCard(idea, i, false)).join('');
+    }
+
+    function renderSaved() {
+      const section = document.getElementById('savedSection');
+      const grid = document.getElementById('savedGrid');
+      const count = document.getElementById('savedCount');
+      if (!savedIdeas.length) { section.style.display = 'none'; return; }
+      section.style.display = '';
+      count.textContent = savedIdeas.length + ' saved';
+      grid.innerHTML = savedIdeas.map((idea, i) => renderCard(idea, i, true)).join('');
+    }
+
+    function renderCard(idea, idx, isSaved) {
+      const valColor = idea.value >= 8 ? 'var(--green)' : idea.value >= 5 ? '#eab308' : 'var(--text-3)';
+      const diffColor = idea.difficulty <= 3 ? 'var(--green)' : idea.difficulty <= 6 ? '#eab308' : 'var(--red)';
+      const roi = (idea.value / Math.max(idea.difficulty, 1)).toFixed(1);
+      const prefix = isSaved ? 'saved' : 'gen';
+
+      let h = '<div class="idea-card' + (isSaved ? ' saved' : '') + '">';
+      h += '<div class="idea-top">';
+      h += '<div class="idea-title">' + esc(idea.title) + '</div>';
+      h += '<div class="idea-badges">';
+      h += '<span class="cat-chip cat-' + (idea.category || '') + '">' + (idea.category || '').replace(/_/g, ' ') + '</span>';
+      h += '</div></div>';
+
+      h += '<div style="display:flex;gap:6px;align-items:center">';
+      h += '<span class="badge badge-format">' + (idea.format || '').replace(/_/g, ' ') + '</span>';
+      h += '<span class="idea-target">' + esc(idea.target || '') + '</span>';
+      h += '</div>';
+
+      h += '<div class="idea-angle">' + esc(idea.angle) + '</div>';
+
+      if (idea.data_hook) {
+        h += '<div class="idea-hook"><strong>Data hook:</strong> ' + esc(idea.data_hook) + '</div>';
+      }
+
+      h += '<div class="idea-scores">';
+      h += '<div class="score-item"><span class="score-label">Value</span>';
+      h += '<div class="score-bar"><div class="score-fill" style="width:' + idea.value * 10 + '%;background:' + valColor + '"></div></div>';
+      h += '<span class="score-val" style="color:' + valColor + '">' + idea.value + '</span></div>';
+
+      h += '<div class="score-item"><span class="score-label">Effort</span>';
+      h += '<div class="score-bar"><div class="score-fill" style="width:' + idea.difficulty * 10 + '%;background:' + diffColor + '"></div></div>';
+      h += '<span class="score-val" style="color:' + diffColor + '">' + idea.difficulty + '</span></div>';
+
+      h += '<div class="score-item"><span class="score-label">ROI</span>';
+      h += '<span class="score-val" style="color:var(--accent)">' + roi + 'x</span></div>';
+      h += '</div>';
+
+      h += '<div class="idea-actions">';
+      if (isSaved) {
+        h += '<button onclick="unsaveIdea(' + idx + ')">Remove</button>';
+        h += '<button onclick="chatIdea(' + idx + ',true)">Develop in vChat</button>';
+      } else {
+        const alreadySaved = savedIdeas.some(s => s.title === idea.title);
+        h += '<button class="primary" onclick="saveIdea(' + idx + ')"' + (alreadySaved ? ' disabled title="Already saved"' : '') + '>' + (alreadySaved ? 'Saved' : 'Save') + '</button>';
+        h += '<button onclick="chatIdea(' + idx + ',false)">Develop in vChat</button>';
+      }
+      h += '</div>';
+
+      h += '</div>';
+      return h;
+    }
+
+    // ── Save / Remove ──
+
+    function saveIdea(idx) {
+      const filtered = sortIdeas(filterIdeas(allIdeas));
+      const idea = filtered[idx];
+      if (!idea || savedIdeas.some(s => s.title === idea.title)) return;
+      savedIdeas.push({ ...idea, savedAt: new Date().toISOString() });
+      persistSaved();
+      renderIdeas();
+      renderSaved();
+    }
+
+    function unsaveIdea(idx) {
+      savedIdeas.splice(idx, 1);
+      persistSaved();
+      renderIdeas();
+      renderSaved();
+    }
+
+    async function persistSaved() {
+      await fetch('/api/content/ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ideas: savedIdeas }),
+      });
+    }
+
+    // ── Chat ──
+
+    function chatIdea(idx, isSaved) {
+      const idea = isSaved ? savedIdeas[idx] : sortIdeas(filterIdeas(allIdeas))[idx];
+      if (!idea) return;
+      const ctx = `Content idea: "${idea.title}"\nFormat: ${idea.format}\nAngle: ${idea.angle}\nData hook: ${idea.data_hook}\nTarget: ${idea.target}\nCategory: ${idea.category}`;
+      const q = 'Develop this content idea into a draft. Title: "' + idea.title + '". Format: ' + idea.format + '. Write it in Bram\'s voice: warm, direct, no buzzwords. Use the data hook as the credibility anchor.';
+      window.open('/vchat?context=' + encodeURIComponent('content-idea') + '&data=' + encodeURIComponent(ctx) + '&q=' + encodeURIComponent(q), '_blank');
+    }
+
+    // ── Init ──
+
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function init() {
+      await checkAuth();
+      // Load saved ideas
+      try {
+        const r = await fetch('/api/content/ideas');
+        const data = await r.json();
+        if (data && data.ideas) {
+          savedIdeas = data.ideas;
+          renderSaved();
+        }
+      } catch {}
+    }
+    init();
+  </script>
+</body>
+</html>

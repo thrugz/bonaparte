@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="stylesheet" href="/brand.css">
+  <title>Bonaparte — Competitors</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    h2 { font-family: var(--font-head); font-size: 16px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
+    h2:first-child { margin-top: 0; }
+
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .comp-card {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px; padding: 20px;
+      cursor: pointer; transition: border-color 0.15s;
+    }
+    .comp-card:hover { border-color: var(--border-hi); }
+    .comp-card.active { border-color: var(--accent); }
+    .comp-name { font-family: var(--font-head); font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+    .comp-domain { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); margin-bottom: 10px; }
+    .comp-angle { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+    .comp-actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
+
+    button {
+      padding: 6px 14px; background: var(--bg-3); color: var(--text); border: 1px solid var(--border-hi);
+      border-radius: 4px; font-size: 12px; font-family: var(--font-body); cursor: pointer;
+    }
+    button:hover { background: var(--bg-4); }
+    button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    button.primary:hover { background: var(--v5); }
+    button.danger { border-color: var(--red-dim); color: var(--red); }
+    button.danger:hover { background: rgba(239,68,68,0.06); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .intel { margin-top: 16px; }
+    .intel-loading { color: var(--text-3); font-style: italic; padding: 24px 0; text-align: center; }
+    .intel-section {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+      padding: 20px; margin-bottom: 16px;
+    }
+    .intel-section h3 { font-family: var(--font-head); font-size: 14px; color: var(--accent); margin-bottom: 12px; font-weight: 500; }
+    .intel-answer { font-size: 13px; color: var(--text); margin-bottom: 16px; line-height: 1.7; }
+    .intel-sources { display: flex; flex-direction: column; gap: 10px; }
+    .source {
+      padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    }
+    .source-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .source-title a { color: var(--accent); }
+    .source-snippet { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+    .intel-time { font-size: 11px; color: var(--text-4); margin-top: 8px; font-family: var(--font-mono); }
+
+    .scorecard {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+      padding: 20px; margin-bottom: 16px;
+    }
+    .scorecard h3 { font-family: var(--font-head); font-size: 14px; color: var(--accent); margin-bottom: 16px; font-weight: 500; }
+    .dim-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .dim-name { width: 140px; font-size: 12px; color: var(--text-2); flex-shrink: 0; }
+    .dim-bar { flex: 1; height: 20px; background: var(--bg); border-radius: 3px; position: relative; overflow: hidden; }
+    .dim-fill { height: 100%; border-radius: 3px; position: absolute; top: 0; left: 0; transition: width 0.6s ease; }
+    .dim-fill.vitus { background: rgba(232,159,156,.25); z-index: 1; }
+    .dim-fill.comp { z-index: 2; }
+    .dim-fill.comp.ahead { background: var(--red); opacity: 0.6; }
+    .dim-fill.comp.behind { background: var(--green); opacity: 0.6; }
+    .dim-fill.comp.even { background: var(--text-3); opacity: 0.4; }
+    .dim-scores { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); width: 60px; text-align: right; flex-shrink: 0; }
+    .dim-reason { font-size: 11px; color: var(--text-3); margin: -4px 0 10px 152px; }
+    .verdict { font-size: 13px; color: var(--text); line-height: 1.7; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+    .add-form {
+      display: none; background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+      padding: 20px; margin-bottom: 24px;
+    }
+    .add-form.show { display: block; }
+    .add-form label { display: block; font-size: 12px; color: var(--text-3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .add-form input, .add-form textarea {
+      width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border-hi);
+      border-radius: 4px; color: var(--text); font-size: 13px; font-family: inherit;
+      margin-bottom: 12px; outline: none;
+    }
+    .add-form input:focus, .add-form textarea:focus { border-color: var(--accent); }
+    .add-form textarea { min-height: 60px; resize: vertical; }
+    .form-actions { display: flex; gap: 8px; }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
+    <nav>
+      <a href="/">Dashboard</a>
+      <a href="/competitors" class="active">Competitors</a>
+      <a href="/features">Feature Hunt</a>
+      <a href="/vchat">vChat</a>
+      <a href="/content">Content</a>
+      <a href="/settings">Settings</a>
+      <span class="nav-sep"></span>
+      <a href="/logout" class="logout">Log out</a>
+    </nav>
+  </div>
+  <div class="container">
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Competitors</h2>
+      <button onclick="toggleAdd()">+ Add Competitor</button>
+    </div>
+
+    <div class="add-form" id="addForm">
+      <label>Name</label>
+      <input type="text" id="addName" placeholder="e.g. Autodesk Tandem">
+      <label>Domain</label>
+      <input type="text" id="addDomain" placeholder="e.g. tandem.autodesk.com">
+      <label>Strategic Angle</label>
+      <textarea id="addAngle" placeholder="Why are they a threat? What's their positioning?"></textarea>
+      <div class="form-actions">
+        <button class="primary" onclick="addCompetitor()">Add</button>
+        <button onclick="toggleAdd()">Cancel</button>
+      </div>
+    </div>
+
+    <div class="comp-grid" id="compGrid"></div>
+
+    <div class="intel" id="intel"></div>
+
+  </div>
+
+  <script>
+    let competitors = [];
+    let intelCache = {};
+    let savedIntel = {};
+
+    async function checkAuth() {
+      const r = await fetch('/api/me');
+      if (r.status === 401) location.href = '/login';
+    }
+
+    async function loadCompetitors() {
+      const r = await fetch('/api/competitors');
+      competitors = await r.json();
+      renderCards();
+    }
+
+    function renderCards() {
+      const el = document.getElementById('compGrid');
+      el.innerHTML = '';
+      competitors.forEach((c, i) => {
+        const card = document.createElement('div');
+        card.className = 'comp-card';
+        card.id = 'card-' + i;
+        const hasSaved = !!savedIntel[c.name];
+        const savedDate = hasSaved && savedIntel[c.name].fetchedAt
+          ? new Date(savedIntel[c.name].fetchedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+          : '';
+        card.innerHTML = `
+          <div class="comp-name">${esc(c.name)}</div>
+          <div class="comp-domain">${esc(c.domain)}</div>
+          <div class="comp-angle">${esc(c.angle)}</div>
+          ${hasSaved ? '<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-3);margin-top:8px">Last scan: ' + savedDate + '</div>' : ''}
+          <div class="comp-actions">
+            <button class="primary" onclick="fetchIntel(${i})" id="btn-${i}">${hasSaved ? 'View Intel' : 'Get Intel'}</button>
+            <button onclick="refreshIntel(${i})" id="rbtn-${i}" style="${hasSaved ? '' : 'display:none'}">Refresh</button>
+            <button class="danger" onclick="removeCompetitor(${i})">Remove</button>
+          </div>
+        `;
+        el.appendChild(card);
+      });
+    }
+
+    async function fetchIntel(i) {
+      const comp = competitors[i];
+      const btn = document.getElementById('btn-' + i);
+      const el = document.getElementById('intel');
+
+      // Highlight active card
+      document.querySelectorAll('.comp-card').forEach(c => c.classList.remove('active'));
+      document.getElementById('card-' + i).classList.add('active');
+
+      // Check memory cache first (same session, 10 min)
+      const cached = intelCache[comp.name];
+      if (cached && (Date.now() - cached.ts) < 600000) {
+        renderIntel(cached.data);
+        return;
+      }
+
+      // Check saved intel (persisted across reloads)
+      if (savedIntel[comp.name]) {
+        intelCache[comp.name] = { data: savedIntel[comp.name], ts: Date.now() };
+        renderIntel(savedIntel[comp.name]);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Searching...';
+      el.innerHTML = '<div class="intel-loading">Pulling intelligence on ' + esc(comp.name) + '...</div>';
+
+      try {
+        const r = await fetch('/api/competitors/' + encodeURIComponent(comp.name) + '/intel');
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+        intelCache[comp.name] = { data, ts: Date.now() };
+        savedIntel[comp.name] = data;
+        renderIntel(data);
+      } catch (err) {
+        el.innerHTML = '<div class="intel-loading" style="color:var(--red)">Failed: ' + esc(err.message) + '</div>';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Get Intel';
+    }
+
+    function renderIntel(data) {
+      const el = document.getElementById('intel');
+      let h = `<h2 style="margin-top:16px">${esc(data.name)} — Intelligence</h2>`;
+
+      if (data.angle) {
+        h += `<div style="color:#999;font-size:13px;margin-bottom:16px"><strong style="color:#ccc">Strategic angle:</strong> ${esc(data.angle)}</div>`;
+      }
+
+      for (const section of data.sections) {
+        h += '<div class="intel-section">';
+        h += '<h3>' + esc(section.title) + '</h3>';
+        if (section.answer) {
+          h += '<div class="intel-answer">' + esc(section.answer) + '</div>';
+        }
+        if (section.sources?.length) {
+          h += '<div class="intel-sources">';
+          for (const src of section.sources) {
+            h += '<div class="source">';
+            h += '<div class="source-title"><a href="' + esc(src.url) + '" target="_blank">' + esc(src.title) + '</a></div>';
+            if (src.snippet) h += '<div class="source-snippet">' + esc(src.snippet) + '</div>';
+            h += '</div>';
+          }
+          h += '</div>';
+        }
+        h += '</div>';
+      }
+
+      // Scorecard
+      if (data.scorecardError) {
+        const isRateLimit = data.scorecardError.includes('rate_limit') || data.scorecardError.includes('429');
+        const isAuthError = data.scorecardError.includes('API_KEY') || data.scorecardError.includes('authentication') || data.scorecardError.includes('401');
+        h += '<div class="scorecard"><h3>Vitus vs ' + esc(data.name) + ' — Scorecard</h3>';
+        if (isRateLimit) {
+          h += '<div style="color:var(--text-3);font-size:13px">Rate limited. Try again in a moment.</div>';
+        } else if (isAuthError) {
+          h += '<div style="color:var(--text-3);font-size:13px">Add your ANTHROPIC_API_KEY in <a href="/settings">Settings</a> to enable Vitus product comparison.</div>';
+        } else {
+          h += '<div style="color:var(--text-3);font-size:13px">' + esc(data.scorecardError) + '</div>';
+        }
+        h += '</div>';
+      } else if (data.scorecard && data.scorecard.dimensions) {
+        h += '<div class="scorecard">';
+        h += '<h3>Vitus vs ' + esc(data.name) + ' — Scorecard</h3>';
+        for (const d of data.scorecard.dimensions) {
+          const vPct = (d.vitusScore / 10) * 100;
+          const cPct = (d.score / 10) * 100;
+          const cls = d.score > d.vitusScore ? 'ahead' : d.score < d.vitusScore ? 'behind' : 'even';
+          h += '<div class="dim-row">';
+          h += '<div class="dim-name">' + esc(d.name) + '</div>';
+          h += '<div class="dim-bar">';
+          h += '<div class="dim-fill vitus" style="width:' + vPct + '%"></div>';
+          h += '<div class="dim-fill comp ' + cls + '" style="width:' + cPct + '%"></div>';
+          h += '</div>';
+          h += '<div class="dim-scores">' + d.score + ' / ' + d.vitusScore + '</div>';
+          h += '</div>';
+          if (d.reason) {
+            h += '<div class="dim-reason">' + esc(d.reason) + '</div>';
+          }
+        }
+        if (data.scorecard.verdict) {
+          h += '<div class="verdict">' + esc(data.scorecard.verdict) + '</div>';
+        }
+        h += '</div>';
+      }
+
+      if (data.fetchedAt) {
+        h += '<div class="intel-time">Fetched ' + new Date(data.fetchedAt).toLocaleString() + '</div>';
+      }
+
+      el.innerHTML = h;
+    }
+
+    function toggleAdd() {
+      document.getElementById('addForm').classList.toggle('show');
+    }
+
+    async function addCompetitor() {
+      const name = document.getElementById('addName').value.trim();
+      const domain = document.getElementById('addDomain').value.trim();
+      const angle = document.getElementById('addAngle').value.trim();
+      if (!name) return;
+
+      competitors.push({ name, domain, angle });
+      await fetch('/api/competitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(competitors),
+      });
+
+      document.getElementById('addName').value = '';
+      document.getElementById('addDomain').value = '';
+      document.getElementById('addAngle').value = '';
+      toggleAdd();
+      renderCards();
+    }
+
+    async function removeCompetitor(i) {
+      const name = competitors[i].name;
+      competitors.splice(i, 1);
+      delete intelCache[name];
+      await fetch('/api/competitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(competitors),
+      });
+      renderCards();
+      document.getElementById('intel').innerHTML = '';
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function refreshIntel(i) {
+      const comp = competitors[i];
+      // Clear caches to force fresh fetch
+      delete intelCache[comp.name];
+      delete savedIntel[comp.name];
+
+      const btn = document.getElementById('rbtn-' + i);
+      const mainBtn = document.getElementById('btn-' + i);
+      const el = document.getElementById('intel');
+
+      document.querySelectorAll('.comp-card').forEach(c => c.classList.remove('active'));
+      document.getElementById('card-' + i).classList.add('active');
+
+      btn.disabled = true;
+      btn.textContent = 'Refreshing...';
+      mainBtn.disabled = true;
+      el.innerHTML = '<div class="intel-loading">Refreshing intelligence on ' + esc(comp.name) + '...</div>';
+
+      try {
+        const r = await fetch('/api/competitors/' + encodeURIComponent(comp.name) + '/intel');
+        const data = await r.json();
+        if (data.error) throw new Error(data.error);
+        intelCache[comp.name] = { data, ts: Date.now() };
+        savedIntel[comp.name] = data;
+        renderIntel(data);
+        renderCards();
+      } catch (err) {
+        el.innerHTML = '<div class="intel-loading" style="color:var(--red)">Failed: ' + esc(err.message) + '</div>';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+      mainBtn.disabled = false;
+    }
+
+    async function init() {
+      await checkAuth();
+      // Load saved intel first, then competitors
+      try {
+        const r = await fetch('/api/competitors/saved/intel');
+        if (r.ok) savedIntel = await r.json();
+      } catch {}
+      await loadCompetitors();
+    }
+    init();
+  </script>
+</body>
+</html>

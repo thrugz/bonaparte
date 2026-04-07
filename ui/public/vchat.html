@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="stylesheet" href="/brand.css">
+  <title>Bonaparte — vChat</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; height: 100vh; display: flex; flex-direction: column; }
+
+    .chat-container { flex: 1; display: flex; flex-direction: column; max-width: 900px; margin: 0 auto; width: 100%; padding: 0 24px; overflow: hidden; }
+
+    .chat-header { padding: 20px 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .chat-header h2 { font-family: var(--font-head); font-size: 16px; color: var(--accent); font-weight: 500; margin: 0; }
+    .chat-header p { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+    .messages { flex: 1; overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 16px; }
+
+    .msg { max-width: 85%; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .msg.user { align-self: flex-end; }
+    .msg.assistant { align-self: flex-start; }
+
+    .msg-bubble {
+      padding: 12px 16px; border-radius: 12px; font-size: 13px; line-height: 1.7;
+      white-space: pre-wrap; word-wrap: break-word;
+    }
+    .msg.user .msg-bubble {
+      background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px;
+    }
+    .msg.assistant .msg-bubble {
+      background: var(--bg-2); color: var(--text); border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .msg.assistant .msg-bubble strong { color: var(--white); }
+    .msg.assistant .msg-bubble a { color: var(--accent); }
+
+    .msg-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-3); margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase; }
+    .msg.user .msg-label { text-align: right; }
+
+    .msg-context {
+      font-size: 11px; color: var(--text-3); margin-bottom: 4px; padding: 4px 10px;
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 6px;
+      font-family: var(--font-mono);
+    }
+
+    .typing { align-self: flex-start; }
+    .typing .msg-bubble { background: var(--bg-2); border: 1px solid var(--border); padding: 12px 20px; }
+    .typing-dots { display: flex; gap: 4px; }
+    .typing-dots span {
+      width: 6px; height: 6px; background: var(--text-3); border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    .input-area { padding: 16px 0 24px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    .input-row { display: flex; gap: 8px; }
+    .input-row textarea {
+      flex: 1; padding: 12px 16px; background: var(--bg-1); border: 1px solid var(--border-hi);
+      border-radius: 8px; color: var(--text); font-size: 13px; font-family: var(--font-body);
+      resize: none; outline: none; min-height: 44px; max-height: 120px; line-height: 1.5;
+    }
+    .input-row textarea:focus { border-color: var(--accent); }
+    .input-row textarea::placeholder { color: var(--text-4); }
+    .send-btn {
+      padding: 0 20px; background: var(--accent); color: var(--bg); border: none;
+      border-radius: 8px; font-size: 13px; font-family: var(--font-body); font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+    }
+    .send-btn:hover { background: var(--v5); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .quick-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .quick-btn {
+      padding: 5px 12px; background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: 6px; font-size: 11px; color: var(--text-2); cursor: pointer;
+      font-family: var(--font-body); text-align: left; line-height: 1.4;
+    }
+    .quick-btn:hover { background: var(--bg-3); color: var(--text); border-color: var(--border-hi); }
+
+    .pattern-group { margin-top: 10px; }
+    .pattern-label {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-4);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
+    }
+    .pattern-label:hover { color: var(--text-3); }
+    .pattern-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .pattern-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .patterns-toggle {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-4); cursor: pointer;
+      background: none; border: 1px solid var(--border); border-radius: 4px; padding: 3px 10px;
+      margin-top: 6px;
+    }
+    .patterns-toggle:hover { color: var(--text-3); border-color: var(--border-hi); }
+
+    .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+    .empty-state .logo-mark { font-size: 48px; opacity: 0.15; }
+    .empty-state p { color: var(--text-3); font-size: 13px; max-width: 400px; text-align: center; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
+    <nav>
+      <a href="/">Dashboard</a>
+      <a href="/competitors">Competitors</a>
+      <a href="/features">Feature Hunt</a>
+      <a href="/vchat" class="active">vChat</a>
+      <a href="/content">Content</a>
+      <a href="/settings">Settings</a>
+      <span class="nav-sep"></span>
+      <a href="/logout" class="logout">Log out</a>
+    </nav>
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-header">
+      <h2>vChat</h2>
+      <p>Query HubSpot, Slack, memory, market demand, all in one place.</p>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="empty-state" id="emptyState">
+        <div class="logo-mark">B</div>
+        <p>Ask anything about accounts, deals, signals, market demand, or contacts. Pick a pattern below or type your own question.</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <textarea id="input" placeholder="Ask about your data..." rows="1" onkeydown="handleKey(event)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="send()">Send</button>
+      </div>
+      <div id="patterns"></div>
+    </div>
+  </div>
+
+  <script>
+    let chatHistory = [];
+    let panelContext = null;
+
+    async function checkAuth() {
+      const r = await fetch('/api/me');
+      if (r.status === 401) location.href = '/login';
+    }
+
+    // Check for panel context passed via URL params
+    function loadPanelContext() {
+      const params = new URLSearchParams(location.search);
+      const type = params.get('context');
+      const data = params.get('data');
+      const question = params.get('q');
+      if (type && data) {
+        panelContext = { type, data: decodeURIComponent(data) };
+      }
+      if (question) {
+        document.getElementById('input').value = decodeURIComponent(question);
+        // Auto-send if we have a question
+        setTimeout(() => send(), 300);
+      }
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
+      // Auto-resize
+      const ta = e.target;
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+    }
+
+    function addMessage(role, content, contextLabel) {
+      const el = document.getElementById('messages');
+      const empty = document.getElementById('emptyState');
+      if (empty) empty.remove();
+
+      const div = document.createElement('div');
+      div.className = 'msg ' + role;
+
+      let html = '<div class="msg-label">' + (role === 'user' ? 'You' : 'Bonaparte') + '</div>';
+      if (contextLabel) {
+        html += '<div class="msg-context">' + esc(contextLabel) + '</div>';
+      }
+      html += '<div class="msg-bubble">' + (role === 'assistant' ? formatMarkdown(content) : esc(content)) + '</div>';
+      div.innerHTML = html;
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+      return div;
+    }
+
+    function showTyping() {
+      const el = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = 'msg typing';
+      div.id = 'typing';
+      div.innerHTML = '<div class="msg-label">Bonaparte</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function hideTyping() {
+      const t = document.getElementById('typing');
+      if (t) t.remove();
+    }
+
+    async function send() {
+      const input = document.getElementById('input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      input.style.height = 'auto';
+      document.getElementById('sendBtn').disabled = true;
+
+      // Show context label if panel context is active
+      const contextLabel = panelContext ? 'Context: ' + panelContext.type : null;
+      addMessage('user', text, contextLabel);
+      chatHistory.push({ role: 'user', content: text });
+
+      showTyping();
+
+      try {
+        const body = { messages: chatHistory };
+        if (panelContext) {
+          body.context_type = panelContext.type;
+          body.context_data = panelContext.data;
+          // Only use panel context for the first message
+          panelContext = null;
+        }
+
+        const r = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await r.json();
+        hideTyping();
+
+        if (data.error) throw new Error(data.error);
+
+        addMessage('assistant', data.reply);
+        chatHistory.push({ role: 'assistant', content: data.reply });
+      } catch (err) {
+        hideTyping();
+        addMessage('assistant', 'Error: ' + err.message);
+      }
+
+      document.getElementById('sendBtn').disabled = false;
+      input.focus();
+    }
+
+    function quickSend(text) {
+      document.getElementById('input').value = text;
+      send();
+    }
+
+    function formatMarkdown(text) {
+      // Basic markdown: bold, links, code
+      return esc(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code style="background:var(--bg-3);padding:1px 4px;border-radius:3px;font-family:var(--font-mono);font-size:12px">$1</code>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    const PATTERNS = [
+      { group: 'Bulletin & signals', prompts: [
+        { label: 'Current bulletin', q: 'Show me the current bulletin and explain what each item means for my week.' },
+        { label: 'This week', q: 'What are the top 3 things I should act on this week? Name who does what.' },
+        { label: 'Stale signals', q: 'Which signals have gone stale or are overdue? What should I do about each one?' },
+        { label: 'New patterns', q: 'Are there any emerging patterns across accounts or signals I should be aware of?' },
+        { label: 'Follow-ups due', q: 'Which contacts or deals need a follow-up this week based on activity gaps?' },
+        { label: 'What changed', q: 'What has changed since the last bulletin? Any new signals, resolved items, or score movements?' },
+      ]},
+      { group: 'Accounts', prompts: [
+        { label: 'Health check', q: 'Give me a health check on all accounts: who is growing, who is cooling, who needs intervention?' },
+        { label: 'COWI status', q: 'What is the current state of COWI? Contacts, engagement, signals, and what should I do next?' },
+        { label: 'Ramboll status', q: 'What do we know about Ramboll? Contacts, engagement, any open threads or risks?' },
+        { label: 'FLC / Femern', q: 'Summarize the FLC/Femern situation: contacts, consortium members, engagement, and strategic opportunities.' },
+        { label: 'Expansion targets', q: 'Which accounts have strong engagement but no deal? Rank by opportunity size and suggest next steps.' },
+        { label: 'Cooling accounts', q: 'Which accounts have dropped in engagement or login activity recently? What should I do?' },
+      ]},
+      { group: 'Pipeline', prompts: [
+        { label: 'Deal status', q: 'Summarize all open deals: stage, owner, amount, close date, and any that are overdue or stale.' },
+        { label: 'Pilot risks', q: 'Which pilots are at risk? Look at stale deals, missing activity, or approaching close dates.' },
+        { label: 'No-deal accounts', q: 'Which accounts have 10+ contacts but no associated deal? Should we create one?' },
+        { label: 'Purgatory stuck', q: 'Which contacts have been stuck in purgatory stages for more than 14 days? How do I move them?' },
+      ]},
+      { group: 'People', prompts: [
+        { label: 'Champion candidates', q: 'Who are the strongest champion candidates across all accounts? Score 7+, active login, high feature adoption.' },
+        { label: 'Churn risk', q: 'Which engaged users have gone quiet? Score > 0 but no login in 14+ days. Prioritize by account importance.' },
+        { label: 'New users', q: 'Have any new contacts been added to key accounts recently? What do we know about them?' },
+        { label: 'Power users', q: 'Who are the top 10 most engaged users across all accounts? What features do they use?' },
+        { label: 'Inactive tier 1', q: 'Are there any Tier 1 contacts who have stopped logging in? That is a red flag worth investigating.' },
+      ]},
+      { group: 'Market & product', prompts: [
+        { label: 'Demand gaps', q: 'What are the biggest market demand gaps Vitus should address? Use the Onsight survey data.' },
+        { label: 'Competitor threats', q: 'Based on market demand, which competitor capabilities are the biggest threat to Vitus?' },
+        { label: 'Quick wins', q: 'Which market demands score 8+ that Vitus already partially covers? Those are quick wins to strengthen.' },
+        { label: 'Build vs have', q: 'Give me a clear table: what does the market want, what does Vitus already have, and what needs to be built?' },
+        { label: 'Multi-CDE opportunity', q: 'How big is the multi-CDE opportunity based on survey data? What CDEs do respondents use alongside ACC?' },
+        { label: 'AI features', q: 'What AI features does the market want most? What are respondents already using vs what they dream about?' },
+      ]},
+      { group: 'Strategy', prompts: [
+        { label: 'Weekly brief', q: 'Write a weekly brief: top signals, account movements, pipeline status, and one recommended priority.' },
+        { label: 'Josephine prep', q: 'What should Josephine focus on this week for sales? Which accounts, which contacts, what angle?' },
+        { label: 'Board snapshot', q: 'Give me a 5-line executive snapshot: total contacts, avg score, tier 1 rate, open deals, biggest risk, biggest opportunity.' },
+        { label: 'ISO 19650 angle', q: 'How can we strengthen the ISO 19650 positioning? What does the survey say about compliance needs?' },
+        { label: 'Nordic vs French', q: 'Compare our Nordic and French market positions. Account count, engagement, deal status, and where to push.' },
+      ]},
+      { group: 'Draft', prompts: [
+        { label: 'Account intro email', q: 'Draft a warm intro email to a new contact at a key account. I will tell you who.' },
+        { label: 'Champion nurture', q: 'Draft a message to our most engaged champion thanking them and deepening the relationship.' },
+        { label: 'Re-engage email', q: 'Draft a re-engagement email for a contact who has gone quiet. Warm, direct, no pressure.' },
+        { label: 'LinkedIn post idea', q: 'Suggest a LinkedIn post based on our market demand data. Something concrete about BIM data friction that our audience would recognize.' },
+      ]},
+    ];
+
+    function renderPatterns(expanded) {
+      const el = document.getElementById('patterns');
+      let h = '';
+      const groups = expanded ? PATTERNS : PATTERNS.slice(0, 3);
+      groups.forEach(g => {
+        h += '<div class="pattern-group">';
+        h += '<div class="pattern-label">' + g.group + '</div>';
+        h += '<div class="pattern-pills">';
+        g.prompts.forEach(p => {
+          h += '<button class="quick-btn" onclick="quickSend(\'' + p.q.replace(/'/g, "\\'") + '\')">' + p.label + '</button>';
+        });
+        h += '</div></div>';
+      });
+      if (!expanded) {
+        h += '<button class="patterns-toggle" onclick="renderPatterns(true)">Show all patterns (' + PATTERNS.reduce((s, g) => s + g.prompts.length, 0) + ')</button>';
+      } else {
+        h += '<button class="patterns-toggle" onclick="renderPatterns(false)">Show fewer</button>';
+      }
+      el.innerHTML = h;
+    }
+
+    async function init() {
+      await checkAuth();
+      loadPanelContext();
+      renderPatterns(false);
+    }
+    init();
+  </script>
+</body>
+</html>

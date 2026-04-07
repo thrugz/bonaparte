@@ -1,0 +1,275 @@
+{
+  "meta": {
+    "source": "Onsight Projection Report 2026 Survey",
+    "channel": "#survey (C09TWC1B0UW)",
+    "respondents": 25,
+    "collection_period": "2026-01-27 to 2026-03-23",
+    "profiles": {
+      "roles": {
+        "BIM Manager / Coordinator / Specialist": 19,
+        "VDC / Digitalization Lead": 2,
+        "Executive / Owner Representative": 2,
+        "Design Manager / Architect": 1,
+        "Project Engineer / Field Technician": 1,
+        "Construction / Site Engineer": 1,
+        "BIM Strategy Lead": 1
+      },
+      "organizations": {
+        "Contractor / Construction Company": 9,
+        "Consultant / Engineering firm": 8,
+        "Client / Owner": 3,
+        "Designer / Architect": 3,
+        "Other": 2
+      },
+      "countries": ["Netherlands", "Canada", "Norway", "Poland", "Spain", "Italy", "Austria", "Belgium", "Switzerland", "Ireland", "Germany", "France", "Romania", "Denmark", "Trinidad and Tobago", "UK"],
+      "budget_range": {
+        "under_2M": 2,
+        "2M_10M": 4,
+        "10M_100M": 8,
+        "100M_500M": 5,
+        "500M_plus": 6
+      }
+    }
+  },
+  "market_demands": [
+    {
+      "id": "data-integration",
+      "name": "Cross-system data integration",
+      "description": "Improving data integration between systems, eliminating silos between BIM, scheduling, cost, and document management tools",
+      "demand_score": 9,
+      "mentions": 14,
+      "mention_rate": 0.56,
+      "survey_evidence": "56% named 'Improving data integration between systems' as #1 digital priority. Dominant friction point: 'between software systems'.",
+      "vitus_status": "partial",
+      "vitus_capability": "Native ACC integration with auto-sync. REST API for custom data. But limited to ACC ecosystem only.",
+      "gap": "No multi-CDE support. Users on Dalux, Projectwise, Trimble Connect, Thinkproject are unreachable. Market wants one layer across all systems.",
+      "category": "integration"
+    },
+    {
+      "id": "non-bim-communication",
+      "name": "BIM data communication for non-BIM users",
+      "description": "Making BIM data accessible and understandable to project managers, clients, and field workers who don't use BIM tools",
+      "demand_score": 9,
+      "mentions": 25,
+      "mention_rate": 1.0,
+      "survey_evidence": "Average effectiveness score 3.5/10 for communicating with non-BIM users. Every respondent flagged this. Quotes: 'BIM tools are designed for those who already know BIM', 'licenses not available for non-BIM users', 'requires too much manual translation'.",
+      "vitus_status": "strong",
+      "vitus_capability": "Web-based viewer (no install needed), interactive dashboards, colorize by property, saved views with comments. One respondent specifically mentioned Vitus as their tool.",
+      "gap": "Could be stronger with simplified report generation, role-based views that auto-filter complexity, and export to non-BIM formats.",
+      "category": "collaboration"
+    },
+    {
+      "id": "data-standards-governance",
+      "name": "Data standards and governance",
+      "description": "Building and enforcing BIM data standards, EIR compliance, and information requirement validation",
+      "demand_score": 8,
+      "mentions": 7,
+      "mention_rate": 0.28,
+      "survey_evidence": "28% named 'Building data standards and governance' as top priority. Multiple respondents want automated EIR/AIR validation. ISO 19650 process quality is a constant struggle.",
+      "vitus_status": "partial",
+      "vitus_capability": "Document log generation for ISO 19650 compliance. Display filter for checking property completeness.",
+      "gap": "No automated EIR validation, no data quality scoring against requirements, no compliance dashboards showing gap-to-standard.",
+      "category": "compliance"
+    },
+    {
+      "id": "model-cost-controls-5d",
+      "name": "Model-based cost controls (5D)",
+      "description": "Linking BIM model data to cost estimation, quantity takeoff, and budget tracking",
+      "demand_score": 8,
+      "mentions": 12,
+      "mention_rate": 0.48,
+      "survey_evidence": "48% expect model-based cost controls to be standard by 2027. Multiple requests for automated quantity takeoff and cross-project cost estimation.",
+      "vitus_status": "partial",
+      "vitus_capability": "Quantity takeoff via BIM properties. Calculated columns in dashboards. Custom data for progress tracking.",
+      "gap": "No native cost linking, no 5D workflow, no budget-to-model comparison. Quantity takeoff exists but isn't positioned as cost control.",
+      "category": "analytics"
+    },
+    {
+      "id": "realtime-field-office-sync",
+      "name": "Near real-time data sync between office and field",
+      "description": "Live synchronization of BIM data, progress, and issues between office platforms and field/site teams",
+      "demand_score": 8,
+      "mentions": 13,
+      "mention_rate": 0.52,
+      "survey_evidence": "52% expect real-time sync to be standard by 2027. 'Between field and office' is a top friction point. Multiple respondents want field workers accessing model data.",
+      "vitus_status": "weak",
+      "vitus_capability": "Web-based viewer accessible on any device. Real-time notifications on saved views.",
+      "gap": "No dedicated field app, no offline mode, no reality capture integration, no site-to-model feedback loop.",
+      "category": "field"
+    },
+    {
+      "id": "automated-progress-tracking",
+      "name": "Automated progress tracking from reality capture",
+      "description": "Using laser scans, photogrammetry, or drone data to automatically compare as-built vs. as-designed",
+      "demand_score": 7,
+      "mentions": 10,
+      "mention_rate": 0.40,
+      "survey_evidence": "40% expect this to be standard by 2027. Multiple respondents want planned vs. reality tracking.",
+      "vitus_status": "none",
+      "vitus_capability": "No reality capture integration currently.",
+      "gap": "Full gap. Would require point cloud ingestion, scan-to-BIM comparison, and deviation reporting.",
+      "category": "field"
+    },
+    {
+      "id": "federated-cde",
+      "name": "Federated CDE across partners",
+      "description": "A unified data layer that works across multiple CDEs used by different project partners",
+      "demand_score": 8,
+      "mentions": 11,
+      "mention_rate": 0.44,
+      "survey_evidence": "44% expect federated CDE to be standard by 2027. Multi-CDE usage is the norm: most respondents use ACC + Dalux or ACC + another system. One respondent explicitly wants 'one CDE not two'.",
+      "vitus_status": "partial",
+      "vitus_capability": "Vitus layers on ACC. This is exactly the intelligence layer concept, but only for ACC.",
+      "gap": "Expanding to Dalux, Trimble Connect, and Projectwise would make Vitus the federated intelligence layer the market wants.",
+      "category": "integration"
+    },
+    {
+      "id": "ai-model-checking",
+      "name": "AI-powered model checking and compliance",
+      "description": "Automated checking of BIM models against requirements, standards, and specifications using AI",
+      "demand_score": 8,
+      "mentions": 12,
+      "mention_rate": 0.48,
+      "survey_evidence": "Design compliance/model checking is the second most used AI application. Multiple 'dream AI' answers: 'automatic check of all models', 'compliance with standards', 'verify EIR satisfaction in real time'.",
+      "vitus_status": "none",
+      "vitus_capability": "Display filter can check property presence, but no automated compliance or AI checking.",
+      "gap": "Opportunity for AI-powered EIR validation, automated property completeness checks, and standards compliance reports.",
+      "category": "ai"
+    },
+    {
+      "id": "ai-quantity-takeoff",
+      "name": "AI-powered quantity takeoff",
+      "description": "Automated extraction and validation of quantities from BIM models and documents",
+      "demand_score": 7,
+      "mentions": 8,
+      "mention_rate": 0.32,
+      "survey_evidence": "Generative quantity takeoffs already used by some. 'Material quantity across all disciplines' and 'quantity surveying' are top automation wishes.",
+      "vitus_status": "partial",
+      "vitus_capability": "BIM property extraction, quantity takeoff via dashboards, calculated columns.",
+      "gap": "Not AI-enhanced. Could add cross-model aggregation, smart grouping, and PDF-to-quantity extraction.",
+      "category": "ai"
+    },
+    {
+      "id": "carbon-lca",
+      "name": "Carbon dashboards / LCA automation",
+      "description": "Environmental impact tracking, carbon footprint calculation, and lifecycle assessment from BIM data",
+      "demand_score": 6,
+      "mentions": 6,
+      "mention_rate": 0.24,
+      "survey_evidence": "24% expect carbon dashboards to be standard by 2027. One respondent wants to automate carbon footprint as cross-project insight.",
+      "vitus_status": "none",
+      "vitus_capability": "Dashboard engine exists. Calculated columns could compute carbon if data is present. But no built-in carbon factors or LCA logic.",
+      "gap": "Need material-to-carbon mapping, LCA calculation engine, and pre-built carbon dashboard templates.",
+      "category": "sustainability"
+    },
+    {
+      "id": "digital-twins",
+      "name": "Digital twins with live telemetry",
+      "description": "Connected BIM models with real-time sensor/IoT data for operations and facility management",
+      "demand_score": 6,
+      "mentions": 6,
+      "mention_rate": 0.24,
+      "survey_evidence": "24% expect digital twins to be standard by 2027. Multiple respondents on large infrastructure projects (500M+) see this as critical.",
+      "vitus_status": "none",
+      "vitus_capability": "No IoT/sensor integration. Viewer could theoretically visualize live data via API.",
+      "gap": "Full gap. Would require IoT data ingestion, real-time visualization overlay, and operations dashboards.",
+      "category": "operations"
+    },
+    {
+      "id": "design-construction-bridge",
+      "name": "Design-to-construction data bridge",
+      "description": "Reducing friction and data loss in the handover from design teams to construction teams",
+      "demand_score": 9,
+      "mentions": 18,
+      "mention_rate": 0.72,
+      "survey_evidence": "72% flag 'between design and construction teams' as a top friction point. The #1 data friction source across all respondents. Quotes: 'things in the model can be different to what is implemented on site', 'not all contractors work with the model'.",
+      "vitus_status": "partial",
+      "vitus_capability": "Shared views, collaboration tools, web-based access without installs. Custom data for progress tracking on objects.",
+      "gap": "Could strengthen with handover workflows, design-vs-as-built comparison tools, and contractor-specific simplified views.",
+      "category": "collaboration"
+    },
+    {
+      "id": "data-quality-scoring",
+      "name": "Data quality and consistency monitoring",
+      "description": "Real-time scoring and alerting on BIM data quality, completeness, and consistency across systems",
+      "demand_score": 8,
+      "mentions": 10,
+      "mention_rate": 0.40,
+      "survey_evidence": "Average data confidence only 7/10. 'Poor data quality/lineage' is a top AI barrier. Multiple respondents want 'data quality gap to EIR' as a dashboard metric. One wants 'informational completeness indicator against AIR'.",
+      "vitus_status": "weak",
+      "vitus_capability": "Display filter can identify missing properties. Dashboards can visualize completeness.",
+      "gap": "No automated quality scoring, no EIR-based validation rules, no quality trend tracking over time.",
+      "category": "compliance"
+    },
+    {
+      "id": "cross-project-insights",
+      "name": "Cross-project analytics and pattern recognition",
+      "description": "Aggregated intelligence across multiple projects to identify patterns, benchmarks, and recurring issues",
+      "demand_score": 7,
+      "mentions": 8,
+      "mention_rate": 0.32,
+      "survey_evidence": "32% want to automate a cross-project insight. Examples: 'early recognition of patterns where errors often occur', 'detect systematic errors from one project to another', 'compare requirements across projects'.",
+      "vitus_status": "weak",
+      "vitus_capability": "Workspace with content browser. Can copy dashboards across projects. But no cross-project aggregation or analytics.",
+      "gap": "Need cross-project data aggregation, benchmarking, pattern detection, and portfolio-level dashboards.",
+      "category": "analytics"
+    },
+    {
+      "id": "schedule-integration-4d",
+      "name": "4D scheduling integration",
+      "description": "Linking BIM models to project schedules for visual planning and progress tracking",
+      "demand_score": 7,
+      "mentions": 8,
+      "mention_rate": 0.32,
+      "survey_evidence": "'Schedule variance' and 'planned vs reality' are top dashboard requests. Multiple respondents want 4D/5D linked to 3D. One specifically wants 'link schedules 4D and budget 5D with 3D geometry'.",
+      "vitus_status": "weak",
+      "vitus_capability": "Custom data could hold schedule dates on objects. Dashboards could visualize timeline. But no native schedule import or 4D playback.",
+      "gap": "Need schedule file import (P6/MS Project), model-to-task linking, timeline visualization, and schedule deviation tracking.",
+      "category": "analytics"
+    }
+  ],
+  "ai_readiness": {
+    "already_using_ai": {
+      "document_qa_copilots": 11,
+      "design_compliance_checking": 9,
+      "code_specification_search": 7,
+      "schedule_cost_forecasting": 4,
+      "generative_quantity_takeoffs": 4,
+      "rfi_submittal_triage": 1,
+      "none_yet": 6
+    },
+    "barriers": {
+      "security_ip_concerns": 12,
+      "integration_challenges": 10,
+      "legal_contractual_restrictions": 10,
+      "lack_internal_skills": 8,
+      "poor_data_quality": 7,
+      "lack_proven_roi": 4
+    }
+  },
+  "tool_landscape": {
+    "cdes": {
+      "ACC": 22,
+      "Dalux": 10,
+      "Trimble Connect": 3,
+      "Projectwise": 2,
+      "Thinkproject": 2,
+      "M-Files": 1,
+      "RIB": 1,
+      "Airtable": 1,
+      "Microsoft SharePoint": 1
+    },
+    "bim_tools": {
+      "Revit": 22,
+      "Navisworks": 16,
+      "PowerBI": 13,
+      "Excel": 14,
+      "Dynamo": 11,
+      "Solibri": 7,
+      "BIMcollab Zoom": 5,
+      "Tekla": 2,
+      "Archicad": 1,
+      "Vitus": 1
+    }
+  }
+}

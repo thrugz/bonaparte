@@ -1,0 +1,131 @@
+/* Bonaparte / Vitus Brand System */
+
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/SofiaPro-Regular.otf') format('opentype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/SofiaPro-Medium.otf') format('opentype');
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/SofiaPro-SemiBold.otf') format('opentype');
+  font-weight: 600;
+}
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/SofiaPro-Bold.otf') format('opentype');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Trade Gothic';
+  src: url('/fonts/TradeGothic-Regular.otf') format('opentype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Trade Gothic';
+  src: url('/fonts/TradeGothic-BoldCond.otf') format('opentype');
+  font-weight: 700;
+}
+
+/* ── Vitus-derived dark palette ── */
+:root {
+  /* Backgrounds: deep purple-tinted darks from V10 */
+  --bg: #0a0a10;
+  --bg-1: #0f0e16;
+  --bg-2: #14131d;
+  --bg-3: #1b1a26;
+  --bg-4: #232231;
+
+  /* Borders: subtle purple tint */
+  --border: #1e1d2b;
+  --border-hi: #2a2940;
+
+  /* Vitus solid palette */
+  --v1: #8e92aa;
+  --v2: #a8b8cc;
+  --v3: #ccd5e0;
+  --v4: #e7e9f0;
+  --v5: #f2bfaf;
+  --v6: #e89f9c;
+  --v7: #c48e9a;
+  --v8: #aa7889;
+  --v9: #8e6e84;
+  --v10: #645c77;
+  --v-black: #414042;
+
+  /* Semantic */
+  --accent: #e89f9c;       /* V6: warm pink, primary accent */
+  --accent-soft: #c48e9a;  /* V7: mauve, secondary */
+  --accent-dim: rgba(232, 159, 156, 0.08);
+  --accent-mid: rgba(232, 159, 156, 0.18);
+
+  --text: #ccd5e0;         /* V3 */
+  --text-1: #e7e9f0;       /* V4 */
+  --text-2: #a8b8cc;       /* V2 */
+  --text-3: #8e92aa;       /* V1 */
+  --text-4: #645c77;       /* V10 */
+  --white: #ffffff;
+
+  --green: #22c55e;
+  --amber: #eab308;
+  --red: #ef4444;
+  --green-dim: rgba(34,197,94,0.08);
+  --amber-dim: rgba(234,179,8,0.08);
+  --red-dim: rgba(239,68,68,0.08);
+
+  /* Gradient */
+  --grad: linear-gradient(135deg, #a8b8cc 0%, #e89f9c 40%, #c48e9a 70%, #8e6e84 100%);
+  --grad-subtle: linear-gradient(135deg, rgba(168,184,204,0.12) 0%, rgba(232,159,156,0.12) 40%, rgba(196,142,154,0.12) 70%, rgba(142,110,132,0.08) 100%);
+
+  /* Typography */
+  --font-head: 'Sofia Pro', -apple-system, sans-serif;
+  --font-body: 'Trade Gothic', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  --gu: 10px;
+}
+
+/* ── Shared nav banner ── */
+.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.top-nav::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 0; right: 0; height: 1px;
+  background: var(--grad);
+  opacity: 0.3;
+}
+.top-nav .logo {
+  font-family: var(--font-head);
+  font-size: 13px; font-weight: 600; color: var(--v3);
+  letter-spacing: 2px; display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+}
+.top-nav .logo img { height: 18px; opacity: 0.9; }
+.top-nav .logo .sep {
+  width: 1px; height: 14px; background: var(--border-hi);
+}
+.top-nav .logo .sub {
+  font-family: var(--font-mono);
+  font-size: 9px; color: var(--text-3); letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.top-nav nav { display: flex; gap: 4px; align-items: center; }
+.top-nav nav a {
+  padding: 5px 14px; font-size: 12px; font-family: var(--font-body);
+  color: var(--text-3); text-decoration: none;
+  border-radius: 4px; transition: background 0.15s, color 0.15s;
+}
+.top-nav nav a:hover { background: var(--bg-3); color: var(--text-1); }
+.top-nav nav a.active { color: var(--accent); background: var(--accent-dim); }
+.top-nav .nav-sep { width: 1px; height: 16px; background: var(--border); margin: 0 6px; }
+.top-nav .logout { color: var(--text-4); font-size: 11px; text-decoration: none; opacity: 0.7; }
+.top-nav .logout:hover { opacity: 1; color: var(--text-2); }

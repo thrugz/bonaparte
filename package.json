@@ -1,0 +1,20 @@
+{
+  "name": "bonaparte",
+  "version": "2.0.0",
+  "description": "Strategic AI tooling for Vitus",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+
+    "dotenv": "^16.4.7",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "node-cron": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="stylesheet" href="/brand.css">
+  <title>Bonaparte — Timeline</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 900px; margin: 0 auto; padding: 24px; }
+
+    h2 { font-family: var(--font-head); font-size: 18px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
+    h2:first-child { margin-top: 0; }
+
+    /* Filters */
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 24px; }
+    .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-sep { width: 1px; height: 24px; background: var(--border-hi); margin: 0 8px; }
+    .filter-btn {
+      padding: 4px 12px; background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: 6px; font-size: 12px; color: var(--text-3); cursor: pointer;
+      font-family: var(--font-body);
+    }
+    .filter-btn:hover { border-color: var(--border-hi); color: var(--text); }
+    .filter-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 28px; }
+
+    .timeline-event { position: relative; margin-bottom: 16px; }
+
+    /* Connecting line */
+    .timeline-event::before {
+      content: '';
+      position: absolute;
+      left: -21px;
+      top: 16px;
+      bottom: -16px;
+      width: 1px;
+      background: var(--border);
+    }
+    .timeline-event:last-child::before { display: none; }
+
+    /* Dot */
+    .timeline-dot {
+      position: absolute;
+      left: -25px;
+      top: 18px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      z-index: 1;
+    }
+    .timeline-dot.signal { background: var(--accent); }
+    .timeline-dot.deal { background: var(--green); }
+    .timeline-dot.contact { background: var(--text-3); }
+    .timeline-dot.login { background: var(--amber); }
+    .timeline-dot.email { background: #818cf8; }
+
+    /* Event card */
+    .event-card {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+      transition: border-color 0.15s;
+    }
+    .event-card:hover { border-color: var(--border-hi); }
+
+    .event-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .event-type {
+      font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+      letter-spacing: 0.8px; font-weight: 600;
+    }
+    .event-type.signal { color: var(--accent); }
+    .event-type.deal { color: var(--green); }
+    .event-type.contact { color: var(--text-3); }
+    .event-type.login { color: var(--amber); }
+    .event-type.email { color: #818cf8; }
+
+    .event-time {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+    }
+
+    .event-severity {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      padding: 1px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .event-severity.red { background: var(--red-dim); color: var(--red); }
+    .event-severity.yellow { background: var(--amber-dim); color: var(--amber); }
+    .event-severity.blue { background: rgba(99,102,241,0.08); color: #818cf8; }
+
+    .event-title {
+      font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--white);
+      margin-bottom: 4px;
+    }
+
+    .event-desc { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+    .event-account {
+      display: inline-block; margin-top: 8px;
+      font-size: 11px; font-family: var(--font-mono); padding: 2px 8px;
+      background: var(--bg-3); border: 1px solid var(--border-hi); border-radius: 3px;
+      color: var(--text-2); letter-spacing: 0.3px;
+    }
+
+    /* Empty state */
+    .empty-state { color: var(--text-3); font-style: italic; padding: 48px 0; text-align: center; }
+
+    /* Loading skeletons */
+    .skeleton-event { margin-bottom: 16px; padding-left: 28px; position: relative; }
+    .skeleton-event::before {
+      content: '';
+      position: absolute; left: 7px; top: 16px; bottom: -16px;
+      width: 1px; background: var(--border);
+    }
+    .skeleton-event:last-child::before { display: none; }
+    .skeleton-dot {
+      position: absolute; left: 3px; top: 18px;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--bg-3);
+    }
+    .skeleton-card {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+    }
+    .skeleton-bar {
+      height: 12px; border-radius: 4px; background: var(--bg-3);
+      animation: shimmer 1.5s ease-in-out infinite alternate;
+    }
+    .skeleton-bar.short { width: 120px; }
+    .skeleton-bar.medium { width: 60%; margin-top: 10px; }
+    .skeleton-bar.long { width: 85%; margin-top: 8px; }
+    .skeleton-bar.tag { width: 80px; margin-top: 10px; height: 18px; border-radius: 3px; }
+
+    @keyframes shimmer {
+      0% { opacity: 0.3; }
+      100% { opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
+    <nav>
+      <a href="/">Dashboard</a>
+      <a href="/timeline" class="active">Timeline</a>
+      <a href="/competitors">Competitors</a>
+      <a href="/features">Feature Hunt</a>
+      <a href="/vchat">vChat</a>
+      <a href="/content">Content</a>
+      <a href="/settings">Settings</a>
+      <span class="nav-sep"></span>
+      <a href="/logout" class="logout">Log out</a>
+    </nav>
+  </div>
+  <div class="container">
+
+    <h2 style="margin:0 0 16px">Timeline</h2>
+
+    <div class="filter-bar">
+      <div class="filter-group" id="typeFilters">
+        <button class="filter-btn active" onclick="setType('all')">All</button>
+        <button class="filter-btn" onclick="setType('signal')">Signals</button>
+        <button class="filter-btn" onclick="setType('deal')">Deals</button>
+        <button class="filter-btn" onclick="setType('contact')">Contacts</button>
+        <button class="filter-btn" onclick="setType('login')">Logins</button>
+        <button class="filter-btn" onclick="setType('email')">Emails</button>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group" id="rangeFilters">
+        <button class="filter-btn" onclick="setRange('today')">Today</button>
+        <button class="filter-btn active" onclick="setRange('week')">This Week</button>
+        <button class="filter-btn" onclick="setRange('month')">This Month</button>
+      </div>
+    </div>
+
+    <div id="timeline"></div>
+
+  </div>
+
+  <script src="/toast.js"></script>
+  <script>
+    let filterType = 'all';
+    let filterRange = 'week';
+    let refreshTimer = null;
+
+    async function checkAuth() {
+      const r = await fetch('/api/me');
+      if (r.status === 401) location.href = '/login';
+    }
+
+    function setType(type) {
+      filterType = type;
+      document.querySelectorAll('#typeFilters .filter-btn').forEach(b => {
+        b.classList.toggle('active', b.textContent.toLowerCase() === type || (type === 'all' && b.textContent === 'All'));
+      });
+      loadTimeline();
+    }
+
+    function setRange(range) {
+      filterRange = range;
+      const labels = { today: 'Today', week: 'This Week', month: 'This Month' };
+      document.querySelectorAll('#rangeFilters .filter-btn').forEach(b => {
+        b.classList.toggle('active', b.textContent === labels[range]);
+      });
+      loadTimeline();
+    }
+
+    function showLoading() {
+      const el = document.getElementById('timeline');
+      let h = '';
+      for (let i = 0; i < 5; i++) {
+        h += '<div class="skeleton-event">';
+        h += '<div class="skeleton-dot"></div>';
+        h += '<div class="skeleton-card">';
+        h += '<div class="skeleton-bar short"></div>';
+        h += '<div class="skeleton-bar medium"></div>';
+        h += '<div class="skeleton-bar long"></div>';
+        h += '<div class="skeleton-bar tag"></div>';
+        h += '</div></div>';
+      }
+      el.innerHTML = h;
+    }
+
+    async function loadTimeline() {
+      showLoading();
+      try {
+        const r = await fetch('/api/timeline?type=' + encodeURIComponent(filterType) + '&range=' + encodeURIComponent(filterRange));
+        const events = await r.json();
+        if (events.error) throw new Error(events.error);
+        renderTimeline(events);
+      } catch (err) {
+        document.getElementById('timeline').innerHTML =
+          '<div class="empty-state" style="color:var(--red)">Failed to load timeline: ' + esc(err.message) + '</div>';
+      }
+    }
+
+    function renderTimeline(events) {
+      const el = document.getElementById('timeline');
+
+      if (!events || events.length === 0) {
+        el.innerHTML = '<div class="empty-state">No events found for this period.</div>';
+        return;
+      }
+
+      // Sort newest first
+      events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      let h = '<div class="timeline">';
+      for (const ev of events) {
+        const type = ev.type || 'signal';
+        const time = formatTime(ev.timestamp);
+
+        h += '<div class="timeline-event">';
+        h += '<div class="timeline-dot ' + type + '"></div>';
+        h += '<div class="event-card">';
+
+        // Meta row
+        h += '<div class="event-meta">';
+        h += '<span class="event-type ' + type + '">' + esc(type) + '</span>';
+        h += '<span class="event-time">' + esc(time) + '</span>';
+        if (ev.severity) {
+          h += '<span class="event-severity ' + ev.severity + '">' + esc(ev.severity) + '</span>';
+        }
+        h += '</div>';
+
+        // Title
+        h += '<div class="event-title">' + esc(ev.title) + '</div>';
+
+        // Description
+        if (ev.description) {
+          h += '<div class="event-desc">' + esc(ev.description) + '</div>';
+        }
+
+        // Account chip
+        if (ev.account) {
+          h += '<span class="event-account">' + esc(ev.account) + '</span>';
+        }
+
+        h += '</div></div>';
+      }
+      h += '</div>';
+
+      el.innerHTML = h;
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const now = new Date();
+      const diffMs = now - d;
+      const diffMin = Math.floor(diffMs / 60000);
+      const diffHr = Math.floor(diffMs / 3600000);
+
+      if (diffMin < 1) return 'Just now';
+      if (diffMin < 60) return diffMin + 'm ago';
+      if (diffHr < 24) return diffHr + 'h ago';
+
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) +
+        ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function init() {
+      await checkAuth();
+      await loadTimeline();
+      // Auto-refresh every 2 minutes
+      refreshTimer = setInterval(loadTimeline, 120000);
+    }
+    init();
+  </script>
+</body>
+</html>

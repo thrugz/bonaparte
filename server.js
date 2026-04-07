@@ -17,7 +17,7 @@ import { SLACK_BOT_TOKEN, HUBSPOT_TOKEN } from "./tools/config.js";
 import { startScheduler, getScheduledJobs, runJobManually } from "./jobs/scheduler.js";
 import { getSetting, setSetting } from "./lib/db.js";
 import { search } from "./tools/research.js";
-import { evaluateFeatures, evaluateCompetitor, chat } from "./lib/claude.js";
+import { evaluateFeatures, evaluateCompetitor, chat, chatStream } from "./lib/claude.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -81,6 +81,9 @@ app.get("/", requireAuth, (req, res) => {
 app.get("/settings", requireAuth, (req, res) => {
   res.sendFile(resolve(__dirname, "ui/public/settings.html"));
 });
+app.get("/timeline", requireAuth, (req, res) => {
+  res.sendFile(resolve(__dirname, "ui/public/timeline.html"));
+});
 app.get("/competitors", requireAuth, (req, res) => {
   res.sendFile(resolve(__dirname, "ui/public/competitors.html"));
 });
@@ -92,6 +95,12 @@ app.get("/vchat", requireAuth, (req, res) => {
 });
 app.get("/content", requireAuth, (req, res) => {
   res.sendFile(resolve(__dirname, "ui/public/content.html"));
+});
+app.get("/timeline", requireAuth, (req, res) => {
+  res.sendFile(resolve(__dirname, "ui/public/timeline.html"));
+});
+app.get("/account", requireAuth, (req, res) => {
+  res.sendFile(resolve(__dirname, "ui/public/account.html"));
 });
 app.use(express.static(resolve(__dirname, "ui/public")));
 
@@ -169,6 +178,7 @@ async function hsSearch(objectType, filterGroups = [], properties = [], limit = 
       limit,
       sorts: [{ propertyName: "lastmodifieddate", direction: "DESCENDING" }],
     }),
+    signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) throw new Error(`HubSpot ${res.status}`);
   return res.json();
@@ -182,6 +192,7 @@ async function fetchAllContacts() {
     const url = `https://api.hubapi.com/crm/v3/objects/contacts?limit=100&properties=${props}` + (after ? `&after=${after}` : "");
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) break;
     const data = await res.json();
@@ -263,17 +274,7 @@ app.get("/api/contacts/all", requireAuth, async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.get("/api/deals", requireAuth, async (req, res) => {
-  try {
-    const data = await hsSearch("deals", [], [
-      "dealname", "dealstage", "amount", "closedate",
-      "hubspot_owner_id", "pipeline", "lastmodifieddate",
-    ], 100);
-    res.json(data.results.map((d) => ({ id: d.id, url: `${HS_BASE}/record/0-3/${d.id}`, ...d.properties })));
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// Deals route moved to bottom (supports ?company= filter)
 
 app.get("/api/pilots", requireAuth, async (req, res) => {
   try {
@@ -746,7 +747,7 @@ app.post("/api/chat", requireAuth, async (req, res) => {
     // Build data context from available sources
     const contextParts = [];
 
-    // Always include memory nodes
+    // Always include memory nodes (sync, instant)
     const nodes = getMemoryNodes();
     const activeSignals = nodes.filter(n => n.type === "SIGNAL" && n.status === "active");
     const facts = nodes.filter(n => n.type === "FACT" && n.status === "active");
@@ -756,58 +757,7 @@ Signals (${activeSignals.length}): ${activeSignals.map(s => `[${s.score}] ${s.de
 Facts (${facts.length}): ${facts.map(f => f.description).join("; ")}
 Patterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
 
-    // Load bulletin if available
-    try {
-      const bulRes = await fetch(`http://localhost:${PORT}/api/bulletin`, {
-        headers: { cookie: req.headers.cookie },
-      });
-      if (bulRes.ok) {
-        const bul = await bulRes.json();
-        if (bul.content) {
-          contextParts.push(`CURRENT BULLETIN${bul.date ? ` (${bul.date})` : ""}:\n${bul.content}`);
-        }
-      }
-    } catch {}
-
-    // Load contacts if available
-    try {
-      const contactsRes = await fetch(`http://localhost:${PORT}/api/contacts/all`, {
-        headers: { cookie: req.headers.cookie },
-      });
-      if (contactsRes.ok) {
-        const contacts = await contactsRes.json();
-        const byCompany = {};
-        contacts.forEach(c => {
-          const co = c.company || "Unknown";
-          (byCompany[co] = byCompany[co] || []).push(c);
-        });
-        const summary = Object.entries(byCompany)
-          .sort((a, b) => b[1].length - a[1].length)
-          .slice(0, 20)
-          .map(([name, cs]) => {
-            const avg = (cs.reduce((s, c) => s + c.score, 0) / cs.length).toFixed(1);
-            const t1 = Math.round(cs.filter(c => c.tier === 1).length / cs.length * 100);
-            return `${name}: ${cs.length} contacts, avg ${avg}/9, ${t1}% T1`;
-          }).join("\n");
-        contextParts.push(`HUBSPOT ACCOUNTS (top 20 by size):\n${summary}\nTotal contacts: ${contacts.length}`);
-      }
-    } catch {}
-
-    // Load deals if available
-    try {
-      const dealsRes = await fetch(`http://localhost:${PORT}/api/deals`, {
-        headers: { cookie: req.headers.cookie },
-      });
-      if (dealsRes.ok) {
-        const deals = await dealsRes.json();
-        const dealSummary = deals.map(d =>
-          `${d.dealname}: stage=${d.dealstage}, amount=${d.amount || "?"}, close=${d.closedate || "?"}, owner=${d.hubspot_owner_id}`
-        ).join("\n");
-        contextParts.push(`HUBSPOT DEALS (${deals.length}):\n${dealSummary}`);
-      }
-    } catch {}
-
-    // Load market demand if available
+    // Load market demand (sync file read, instant)
     const insightsPath = resolve(__dirname, "data", "survey-insights.json");
     if (existsSync(insightsPath)) {
       try {
@@ -818,6 +768,85 @@ Patterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
           .join("\n");
         contextParts.push(`MARKET DEMAND (Onsight survey, ${survey.meta.respondents} respondents):\n${demandSummary}`);
       } catch {}
+    }
+
+    // Fetch bulletin, contacts, deals, email stats, recent emails, events in parallel
+    const [bulResult, contactsResult, dealsResult, emailsResult, recentEmailsResult, eventsResult] = await Promise.allSettled([
+      fetch(`http://localhost:${PORT}/api/bulletin`, {
+        headers: { cookie: req.headers.cookie },
+        signal: AbortSignal.timeout(5000),
+      }).then(r => r.ok ? r.json() : null),
+      fetch(`http://localhost:${PORT}/api/contacts/all`, {
+        headers: { cookie: req.headers.cookie },
+        signal: AbortSignal.timeout(15000),
+      }).then(r => r.ok ? r.json() : null),
+      fetch(`http://localhost:${PORT}/api/deals`, {
+        headers: { cookie: req.headers.cookie },
+        signal: AbortSignal.timeout(10000),
+      }).then(r => r.ok ? r.json() : null),
+      fetch(`http://localhost:${PORT}/api/emails/stats`, {
+        headers: { cookie: req.headers.cookie },
+        signal: AbortSignal.timeout(10000),
+      }).then(r => r.ok ? r.json() : null),
+      fetchRecentEmails(30),
+      buildEventConversion().catch(() => null),
+    ]);
+
+    if (bulResult.status === "fulfilled" && bulResult.value?.content) {
+      const bul = bulResult.value;
+      contextParts.push(`CURRENT BULLETIN${bul.date ? ` (${bul.date})` : ""}:\n${bul.content}`);
+    }
+
+    if (contactsResult.status === "fulfilled" && contactsResult.value) {
+      const contacts = contactsResult.value;
+      const byCompany = {};
+      contacts.forEach(c => {
+        const co = c.company || "Unknown";
+        (byCompany[co] = byCompany[co] || []).push(c);
+      });
+      const summary = Object.entries(byCompany)
+        .sort((a, b) => b[1].length - a[1].length)
+        .slice(0, 20)
+        .map(([name, cs]) => {
+          const avg = (cs.reduce((s, c) => s + c.score, 0) / cs.length).toFixed(1);
+          const t1 = Math.round(cs.filter(c => c.tier === 1).length / cs.length * 100);
+          return `${name}: ${cs.length} contacts, avg ${avg}/9, ${t1}% T1`;
+        }).join("\n");
+      contextParts.push(`HUBSPOT ACCOUNTS (top 20 by size):\n${summary}\nTotal contacts: ${contacts.length}`);
+    }
+
+    if (dealsResult.status === "fulfilled" && dealsResult.value) {
+      const deals = dealsResult.value;
+      const dealSummary = deals.map(d =>
+        `${d.dealname}: stage=${d.dealstage}, amount=${d.amount || "?"}, close=${d.closedate || "?"}, owner=${d.hubspot_owner_id}`
+      ).join("\n");
+      contextParts.push(`HUBSPOT DEALS (${deals.length}):\n${dealSummary}`);
+    }
+
+    if (emailsResult.status === "fulfilled" && emailsResult.value) {
+      const stats = emailsResult.value;
+      let emailCtx = `EMAIL ACTIVITY: ${stats.total} recent emails (${stats.inbound} inbound, ${stats.outbound} outbound, ${stats.threads} threads)`;
+      if (stats.noReply.length > 0) {
+        emailCtx += `\nUNANSWERED OUTBOUND (sent, no reply):`;
+        stats.noReply.slice(0, 10).forEach(nr => {
+          emailCtx += `\n- "${nr.subject}" to ${nr.to}, ${nr.daysSince} days ago`;
+        });
+      }
+      contextParts.push(emailCtx);
+    }
+
+    if (recentEmailsResult.status === "fulfilled" && recentEmailsResult.value) {
+      const emails = recentEmailsResult.value;
+      const digest = emails.slice(0, 20).map(e => {
+        const dir = e.direction === "in" ? "IN" : "OUT";
+        const body = e.body ? e.body.replace(/\s+/g, " ").slice(0, 200) : "";
+        return `[${dir}] "${e.subject}" ${e.from} -> ${e.to} (${e.timestamp})\n${body}`;
+      }).join("\n\n");
+      contextParts.push(`RECENT EMAIL CONTENT (20 most recent):\n${digest}`);
+    }
+
+    if (eventsResult.status === "fulfilled" && eventsResult.value) {
+      contextParts.push(formatEventContext(eventsResult.value));
     }
 
     // If panel-specific context is provided, prepend it
@@ -846,6 +875,531 @@ app.get("/api/market-demand", requireAuth, (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── Email intelligence ──
+
+// ── Email intelligence (CRM v3 emails search, requires sales-email-read scope) ──
+
+const EMAIL_PROPS = [
+  "hs_email_subject", "hs_email_direction", "hs_email_status",
+  "hs_email_from_email", "hs_email_to_email", "hs_timestamp",
+  "hubspot_owner_id", "hs_email_text",
+];
+
+async function fetchRecentEmails(limit = 100) {
+  const res = await fetch("https://api.hubapi.com/crm/v3/objects/emails/search", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      filterGroups: [],
+      properties: EMAIL_PROPS,
+      limit,
+      sorts: [{ propertyName: "hs_timestamp", direction: "DESCENDING" }],
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error(`HubSpot emails ${res.status}`);
+  const data = await res.json();
+  return (data.results || []).map(e => ({
+    id: e.id,
+    subject: e.properties.hs_email_subject || "",
+    direction: e.properties.hs_email_direction === "INCOMING_EMAIL" ? "in" : "out",
+    from: e.properties.hs_email_from_email || "",
+    to: e.properties.hs_email_to_email || "",
+    timestamp: e.properties.hs_timestamp,
+    owner: e.properties.hubspot_owner_id,
+    status: e.properties.hs_email_status || "",
+    body: (e.properties.hs_email_text || "").slice(0, 300),
+  }));
+}
+
+function buildEmailStats(emails) {
+  const threads = {};
+  for (const e of emails) {
+    const key = e.subject.replace(/^Re:\s*/i, "").trim().toLowerCase();
+    if (!threads[key]) threads[key] = { subject: e.subject.replace(/^Re:\s*/i, ""), emails: [] };
+    threads[key].emails.push(e);
+  }
+
+  // Find unanswered outbound (sent, no incoming reply on same thread within 3+ days)
+  const noReply = [];
+  const now = Date.now();
+  for (const [, t] of Object.entries(threads)) {
+    const outbound = t.emails.filter(e => e.direction === "out").sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const inbound = t.emails.filter(e => e.direction === "in");
+    if (outbound.length > 0 && inbound.length === 0) {
+      const lastSent = new Date(outbound[0].timestamp);
+      const daysAgo = Math.round((now - lastSent) / 86400000);
+      if (daysAgo >= 3) {
+        noReply.push({ subject: t.subject, to: outbound[0].to, daysSince: daysAgo, sentAt: outbound[0].timestamp });
+      }
+    }
+  }
+
+  return {
+    total: emails.length,
+    inbound: emails.filter(e => e.direction === "in").length,
+    outbound: emails.filter(e => e.direction === "out").length,
+    threads: Object.keys(threads).length,
+    noReply: noReply.sort((a, b) => b.daysSince - a.daysSince),
+  };
+}
+
+function formatEventContext(events) {
+  if (!events || !events.length) return "";
+  let ctx = "MARKETING EVENT CONVERSION:";
+  for (const e of events) {
+    const gapParts = [];
+    if (e.gaps.noCompany) gapParts.push(`${e.gaps.noCompany} missing company`);
+    if (e.gaps.noLifecycle) gapParts.push(`${e.gaps.noLifecycle} missing lifecycle`);
+    if (e.gaps.noEmail) gapParts.push(`${e.gaps.noEmail} missing email`);
+    ctx += `\n${e.name}: invited=${e.invited}, attended=${e.attended}, converted=${e.converted} (${e.conversionRate}%), pipeline=${e.inPipeline}, data quality=${e.dataQuality}%`;
+    if (gapParts.length) ctx += ` [GAPS: ${gapParts.join(", ")}]`;
+    if (e.companies.length) {
+      ctx += `\n  Companies: ${e.companies.slice(0, 8).map(c => `${c.name}(${c.count}${c.converted ? ",conv:" + c.converted : ""})`).join(", ")}`;
+    }
+    // Flag unconverted attendees at known companies
+    const unconverted = e.attendees.filter(a => !a.converted && !a.pipeline && a.company);
+    if (unconverted.length) {
+      ctx += `\n  Still leads: ${unconverted.slice(0, 5).map(a => `${a.name}@${a.company}`).join(", ")}${unconverted.length > 5 ? ` +${unconverted.length - 5} more` : ""}`;
+    }
+  }
+  const totalAtt = events.reduce((s, e) => s + e.attended, 0);
+  const totalConv = events.reduce((s, e) => s + e.converted, 0);
+  ctx += `\nOVERALL: ${totalConv}/${totalAtt} converted (${totalAtt ? Math.round(totalConv / totalAtt * 100) : 0}%). Avg data quality: ${Math.round(events.reduce((s, e) => s + e.dataQuality, 0) / events.length)}%`;
+  return ctx;
+}
+
+app.get("/api/emails", requireAuth, async (req, res) => {
+  try {
+    const emails = await fetchRecentEmails(100);
+    const contact = req.query.contact;
+    const filtered = contact
+      ? emails.filter(e => e.from.includes(contact) || e.to.includes(contact))
+      : emails;
+    res.json(filtered);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/emails/stats", requireAuth, async (req, res) => {
+  try {
+    const emails = await fetchRecentEmails(200);
+    const stats = buildEmailStats(emails);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Streaming chat ──
+
+app.post("/api/chat/stream", requireAuth, async (req, res) => {
+  const { messages, context_type, context_data } = req.body;
+  if (!messages || !Array.isArray(messages)) {
+    return res.status(400).json({ error: "messages array required" });
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+
+  try {
+    // Build context (same as /api/chat but inline to avoid self-fetch)
+    const contextParts = [];
+
+    const nodes = getMemoryNodes();
+    const activeSignals = nodes.filter(n => n.type === "SIGNAL" && n.status === "active");
+    const facts = nodes.filter(n => n.type === "FACT" && n.status === "active");
+    const patterns = nodes.filter(n => n.type === "PATTERN" && n.status === "active");
+    contextParts.push(`MEMORY NODES:\nSignals (${activeSignals.length}): ${activeSignals.map(s => `[${s.score}] ${s.description}`).join("; ")}\nFacts (${facts.length}): ${facts.map(f => f.description).join("; ")}\nPatterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
+
+    const insightsPath = resolve(__dirname, "data", "survey-insights.json");
+    if (existsSync(insightsPath)) {
+      try {
+        const survey = JSON.parse(readFileSync(insightsPath, "utf-8"));
+        const demandSummary = survey.market_demands
+          .sort((a, b) => b.demand_score - a.demand_score)
+          .map(d => `${d.demand_score}/10 ${d.name} (${d.vitus_status}): ${d.gap}`)
+          .join("\n");
+        contextParts.push(`MARKET DEMAND (Onsight survey, ${survey.meta.respondents} respondents):\n${demandSummary}`);
+      } catch {}
+    }
+
+    // Parallel HubSpot fetches (contacts, deals, emails, events)
+    const cookie = req.headers.cookie;
+    const [contactsResult, dealsResult, emailsResult, recentEmailsResult, eventsResult] = await Promise.allSettled([
+      fetch(`http://localhost:${PORT}/api/contacts/all`, { headers: { cookie }, signal: AbortSignal.timeout(15000) }).then(r => r.ok ? r.json() : null),
+      fetch(`http://localhost:${PORT}/api/deals`, { headers: { cookie }, signal: AbortSignal.timeout(10000) }).then(r => r.ok ? r.json() : null),
+      fetch(`http://localhost:${PORT}/api/emails/stats`, { headers: { cookie }, signal: AbortSignal.timeout(10000) }).then(r => r.ok ? r.json() : null),
+      fetchRecentEmails(30),
+      buildEventConversion().catch(() => null),
+    ]);
+
+    if (contactsResult.status === "fulfilled" && contactsResult.value) {
+      const contacts = contactsResult.value;
+      const byCompany = {};
+      contacts.forEach(c => { const co = c.company || "Unknown"; (byCompany[co] = byCompany[co] || []).push(c); });
+      const summary = Object.entries(byCompany).sort((a, b) => b[1].length - a[1].length).slice(0, 20)
+        .map(([name, cs]) => {
+          const avg = (cs.reduce((s, c) => s + c.score, 0) / cs.length).toFixed(1);
+          const t1 = Math.round(cs.filter(c => c.tier === 1).length / cs.length * 100);
+          return `${name}: ${cs.length} contacts, avg ${avg}/9, ${t1}% T1`;
+        }).join("\n");
+      contextParts.push(`HUBSPOT ACCOUNTS (top 20):\n${summary}\nTotal: ${contacts.length}`);
+    }
+
+    if (dealsResult.status === "fulfilled" && dealsResult.value) {
+      const deals = dealsResult.value;
+      contextParts.push(`HUBSPOT DEALS (${deals.length}):\n${deals.map(d => `${d.dealname}: stage=${d.dealstage}, amount=${d.amount || "?"}, close=${d.closedate || "?"}`).join("\n")}`);
+    }
+
+    if (emailsResult.status === "fulfilled" && emailsResult.value) {
+      const stats = emailsResult.value;
+      let emailCtx = `EMAIL ACTIVITY: ${stats.total} recent emails (${stats.inbound} inbound, ${stats.outbound} outbound, ${stats.threads} threads)`;
+      if (stats.noReply.length > 0) {
+        emailCtx += `\nUNANSWERED OUTBOUND (sent, no reply):`;
+        stats.noReply.slice(0, 10).forEach(nr => {
+          emailCtx += `\n- "${nr.subject}" to ${nr.to}, ${nr.daysSince} days ago`;
+        });
+      }
+      contextParts.push(emailCtx);
+    }
+
+    if (recentEmailsResult.status === "fulfilled" && recentEmailsResult.value) {
+      const emails = recentEmailsResult.value;
+      const digest = emails.slice(0, 20).map(e => {
+        const dir = e.direction === "in" ? "IN" : "OUT";
+        const body = e.body ? e.body.replace(/\s+/g, " ").slice(0, 200) : "";
+        return `[${dir}] "${e.subject}" ${e.from} -> ${e.to} (${e.timestamp})\n${body}`;
+      }).join("\n\n");
+      contextParts.push(`RECENT EMAIL CONTENT (20 most recent):\n${digest}`);
+    }
+
+    if (eventsResult.status === "fulfilled" && eventsResult.value) {
+      contextParts.push(formatEventContext(eventsResult.value));
+    }
+
+    if (context_type && context_data) {
+      contextParts.unshift(`PANEL CONTEXT (${context_type}):\n${context_data}`);
+    }
+
+    const dataContext = contextParts.join("\n\n---\n\n");
+    const fullReply = await chatStream(messages, dataContext, (token) => {
+      res.write(`data: ${JSON.stringify({ token })}\n\n`);
+    });
+    res.write(`data: ${JSON.stringify({ done: true, reply: fullReply })}\n\n`);
+    res.end();
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.end();
+  }
+});
+
+// ── Contacts by company ──
+
+app.get("/api/contacts", requireAuth, async (req, res) => {
+  const company = req.query.company;
+  if (!company) return res.status(400).json({ error: "company param required" });
+  try {
+    const all = await fetchAllContacts();
+    const filtered = all.filter(c => c.company && c.company.toLowerCase() === company.toLowerCase());
+    res.json(filtered);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Deals by company ──
+
+app.get("/api/deals", requireAuth, async (req, res) => {
+  const company = req.query.company;
+  try {
+    const filters = company
+      ? [{ filters: [{ propertyName: "hs_company_name", operator: "EQ", value: company }] }]
+      : [];
+    const data = await hsSearch("deals", filters, [
+      "dealname", "dealstage", "amount", "closedate",
+      "hubspot_owner_id", "pipeline", "lastmodifieddate", "hs_company_name",
+    ], 100);
+    res.json(data.results.map((d) => ({ id: d.id, url: `${HS_BASE}/record/0-3/${d.id}`, ...d.properties })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Timeline ──
+
+app.get("/api/timeline", requireAuth, async (req, res) => {
+  const range = req.query.range || "week";
+  const typeFilter = req.query.type || "all";
+
+  const now = new Date();
+  const rangeMs = { today: 86400000, week: 604800000, month: 2592000000 }[range] || 604800000;
+  const since = new Date(now - rangeMs);
+
+  try {
+    const events = [];
+
+    // Memory signals as events
+    const nodes = getMemoryNodes();
+    nodes.filter(n => n.status === "active" && (typeFilter === "all" || typeFilter === "signals")).forEach(n => {
+      events.push({
+        type: "signal",
+        title: n.type + (n.score ? ` [${n.score}]` : ""),
+        description: n.description,
+        account: (n.tags || [])[0] || null,
+        timestamp: n.deadline || now.toISOString(),
+        severity: n.score >= 3 ? "red" : n.score >= 2 ? "yellow" : "blue",
+      });
+    });
+
+    // Recent deals
+    if (typeFilter === "all" || typeFilter === "deals") {
+      try {
+        const data = await hsSearch("deals", [], [
+          "dealname", "dealstage", "amount", "closedate", "lastmodifieddate", "hs_company_name",
+        ], 50);
+        data.results.forEach(d => {
+          const mod = new Date(d.properties.lastmodifieddate);
+          if (mod >= since) {
+            events.push({
+              type: "deal",
+              title: d.properties.dealname,
+              description: `Stage: ${d.properties.dealstage}, Amount: ${d.properties.amount || "?"}`,
+              account: d.properties.hs_company_name || null,
+              timestamp: d.properties.lastmodifieddate,
+              severity: null,
+            });
+          }
+        });
+      } catch {}
+    }
+
+    // Recent contacts
+    if (typeFilter === "all" || typeFilter === "contacts") {
+      try {
+        const data = await hsSearch("contacts", [], [
+          "firstname", "lastname", "company", "lastmodifieddate", "createdate",
+        ], 50);
+        data.results.forEach(c => {
+          const created = new Date(c.properties.createdate);
+          if (created >= since) {
+            events.push({
+              type: "contact",
+              title: `${c.properties.firstname || ""} ${c.properties.lastname || ""}`.trim() || "Unknown",
+              description: `New contact at ${c.properties.company || "Unknown"}`,
+              account: c.properties.company || null,
+              timestamp: c.properties.createdate,
+              severity: null,
+            });
+          }
+        });
+      } catch {}
+    }
+
+    // Recent emails
+    if (typeFilter === "all" || typeFilter === "email") {
+      try {
+        const emails = await fetchRecentEmails(100);
+        emails.forEach(e => {
+          const ts = new Date(e.timestamp);
+          if (ts >= since) {
+            const addr = e.direction === "in" ? e.from : e.to;
+            const domain = addr.split("@")[1] || "";
+            events.push({
+              type: "email",
+              title: e.subject || "(no subject)",
+              description: `${e.direction === "in" ? "From" : "To"}: ${addr}`,
+              account: domain.split(".")[0] || null,
+              timestamp: e.timestamp,
+              severity: null,
+            });
+          }
+        });
+      } catch {}
+    }
+
+    events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Marketing events + conversion ──
+
+const EVENT_LIST_MAP = {
+  "ONsight Launch Dinner 2026":  { invited: 135, attended: 142 },
+  "BIM World CPH 2025":         { invited: 17,  attended: 20 },
+  "FLC Vitus Training (Feb)":   { attended: 126 },
+  "FLC Vitus Training (Mar)":   { attended: 132 },
+  "Onsight Interview Outreach": { invited: 143 },
+};
+
+async function fetchMarketingEvents() {
+  const res = await fetch("https://api.hubapi.com/marketing/v3/marketing-events/", {
+    headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error(`HubSpot marketing events ${res.status}`);
+  const data = await res.json();
+  return data.results || [];
+}
+
+async function fetchListMembers(listId) {
+  const res = await fetch(`https://api.hubapi.com/crm/v3/lists/${listId}/memberships`, {
+    headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.results || []).map(r => r.recordId);
+}
+
+async function batchReadContacts(ids, props) {
+  const results = {};
+  for (let i = 0; i < ids.length; i += 100) {
+    const batch = ids.slice(i, i + 100);
+    const res = await fetch("https://api.hubapi.com/crm/v3/objects/contacts/batch/read", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ inputs: batch.map(id => ({ id })), properties: props }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) continue;
+    const data = await res.json();
+    for (const r of data.results || []) results[r.id] = r.properties;
+  }
+  return results;
+}
+
+const CONVERTED_STAGES = new Set(["customer", "opportunity", "evangelist"]);
+const PIPELINE_STAGES = new Set(["salesqualifiedlead", "marketingqualifiedlead"]);
+
+async function buildEventConversion() {
+  // Fetch events metadata
+  const rawEvents = await fetchMarketingEvents();
+
+  // Fetch all list memberships in parallel
+  const allListIds = new Set();
+  for (const lists of Object.values(EVENT_LIST_MAP)) {
+    for (const lid of Object.values(lists)) allListIds.add(lid);
+  }
+  const membershipResults = await Promise.allSettled(
+    [...allListIds].map(lid => fetchListMembers(lid).then(ids => [lid, ids]))
+  );
+  const memberships = {};
+  for (const r of membershipResults) {
+    if (r.status === "fulfilled") {
+      const [lid, ids] = r.value;
+      memberships[lid] = ids;
+    }
+  }
+
+  // Gather all unique contact IDs
+  const allContactIds = new Set();
+  for (const lists of Object.values(EVENT_LIST_MAP)) {
+    for (const lid of Object.values(lists)) {
+      for (const id of memberships[lid] || []) allContactIds.add(id);
+    }
+  }
+
+  // Batch read contacts
+  const contacts = await batchReadContacts([...allContactIds], [
+    "firstname", "lastname", "company", "email", "lifecyclestage", "purgatory",
+  ]);
+
+  // Build per-event analysis
+  const events = [];
+  for (const [eventName, lists] of Object.entries(EVENT_LIST_MAP)) {
+    const meta = rawEvents.find(e => e.eventName && eventName.toLowerCase().includes(e.eventName.toLowerCase().slice(0, 15))) || {};
+    const invitedIds = memberships[lists.invited] || [];
+    const attendedIds = memberships[lists.attended] || memberships[lists.invited] || [];
+
+    const attendees = [];
+    const gaps = { noCompany: 0, noLifecycle: 0, noEmail: 0 };
+    const lifecycleCounts = {};
+    const companies = {};
+    let converted = 0, inPipeline = 0;
+
+    for (const cid of attendedIds) {
+      const c = contacts[cid] || {};
+      const name = `${c.firstname || ""} ${c.lastname || ""}`.trim() || "?";
+      const company = c.company || "";
+      const lc = c.lifecyclestage || "";
+      const email = c.email || "";
+
+      if (!company) gaps.noCompany++;
+      if (!lc) gaps.noLifecycle++;
+      if (!email) gaps.noEmail++;
+
+      lifecycleCounts[lc || "unknown"] = (lifecycleCounts[lc || "unknown"] || 0) + 1;
+
+      if (!companies[company || "Unknown"]) companies[company || "Unknown"] = { count: 0, converted: 0 };
+      companies[company || "Unknown"].count++;
+
+      const isConverted = CONVERTED_STAGES.has(lc);
+      const isPipeline = PIPELINE_STAGES.has(lc);
+      if (isConverted) { converted++; companies[company || "Unknown"].converted++; }
+      if (isPipeline) inPipeline++;
+
+      attendees.push({ id: cid, name, company, email, lifecycle: lc || "unknown", converted: isConverted, pipeline: isPipeline });
+    }
+
+    const total = attendedIds.length;
+    const dataQuality = total > 0 ? Math.round((1 - (gaps.noCompany + gaps.noLifecycle) / (total * 2)) * 100) : 0;
+
+    events.push({
+      name: eventName,
+      type: meta.eventType || null,
+      date: meta.startDateTime || null,
+      invited: invitedIds.length,
+      attended: total,
+      registrants: meta.registrants || null,
+      cancellations: meta.cancellations || null,
+      noShows: meta.noShows || null,
+      converted,
+      conversionRate: total > 0 ? Math.round(converted / total * 100) : 0,
+      inPipeline,
+      pipelineRate: total > 0 ? Math.round(inPipeline / total * 100) : 0,
+      lifecycleCounts,
+      companies: Object.entries(companies).map(([name, d]) => ({ name, ...d })).sort((a, b) => b.count - a.count),
+      gaps,
+      dataQuality,
+      attendees,
+    });
+  }
+
+  return events;
+}
+
+app.get("/api/events", requireAuth, async (req, res) => {
+  try {
+    const events = await buildEventConversion();
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Content drafts ──
+
+app.post("/api/content/drafts", requireAuth, (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: "text required" });
+  const draftsPath = resolve(__dirname, "data", "drafts.json");
+  let drafts = [];
+  if (existsSync(draftsPath)) {
+    try { drafts = JSON.parse(readFileSync(draftsPath, "utf-8")); } catch {}
+  }
+  drafts.unshift({ text, savedAt: new Date().toISOString() });
+  writeFileSync(draftsPath, JSON.stringify(drafts, null, 2));
+  res.json({ ok: true, count: drafts.length });
 });
 
 // ── Start ──

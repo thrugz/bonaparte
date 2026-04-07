@@ -15,12 +15,12 @@
 
     .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
 
-    h2 { font-family: var(--font-head); font-size: 16px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
+    h2 { font-family: var(--font-head); font-size: 18px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
     h2:first-child { margin-top: 0; }
 
     button {
       padding: 6px 14px; background: var(--bg-3); color: var(--text); border: 1px solid var(--border-hi);
-      border-radius: 4px; font-size: 12px; font-family: var(--font-body); cursor: pointer;
+      border-radius: 4px; font-size: 13px; font-family: var(--font-body); cursor: pointer;
     }
     button:hover { background: var(--bg-4); }
     button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
@@ -34,14 +34,14 @@
       margin-bottom: 24px;
     }
     .sources-panel summary {
-      cursor: pointer; font-size: 13px; color: var(--text-3); user-select: none;
+      cursor: pointer; font-size: 14px; color: var(--text-3); user-select: none;
     }
     .sources-panel summary:hover { color: var(--text); }
     .source-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
     .source-row { display: flex; gap: 8px; align-items: center; }
     .source-row input {
       flex: 1; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border-hi);
-      border-radius: 4px; color: var(--text); font-size: 12px; font-family: var(--font-mono); outline: none;
+      border-radius: 4px; color: var(--text); font-size: 13px; font-family: var(--font-mono); outline: none;
     }
     .source-row input:focus { border-color: var(--accent); }
     .source-row input.name { max-width: 200px; font-family: inherit; }
@@ -54,38 +54,38 @@
     .feature-card:hover { border-color: var(--border-hi); }
     .feature-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
     .feature-title { font-family: var(--font-head); font-size: 15px; font-weight: 600; color: var(--white); }
-    .feature-source { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); white-space: nowrap; }
-    .feature-desc { font-size: 13px; color: var(--text-2); margin-bottom: 12px; line-height: 1.6; }
-    .feature-url { font-size: 12px; margin-bottom: 12px; }
+    .feature-source { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); white-space: nowrap; }
+    .feature-desc { font-size: 14px; color: var(--text-2); margin-bottom: 12px; line-height: 1.6; }
+    .feature-url { font-size: 13px; margin-bottom: 12px; }
 
-    .eval { padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.6; }
+    .eval { padding: 12px 16px; border-radius: 6px; font-size: 14px; line-height: 1.6; }
     .eval.threat { background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.15); }
     .eval.opportunity { background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.15); }
     .eval.neutral { background: var(--bg-2); border: 1px solid var(--border-hi); }
-    .eval-type { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .eval-type { font-family: var(--font-mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
     .eval-type.threat { color: var(--red); }
     .eval-type.opportunity { color: var(--green); }
     .eval-type.neutral { color: var(--text-3); }
     .eval-vitus { color: var(--text); }
-    .eval-loading { color: var(--text-3); font-style: italic; font-size: 12px; }
+    .eval-loading { color: var(--text-3); font-style: italic; font-size: 13px; }
 
     .src-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .src-links a {
-      font-size: 11px; padding: 2px 8px; background: var(--bg); border: 1px solid var(--border);
+      font-size: 12px; padding: 2px 8px; background: var(--bg); border: 1px solid var(--border);
       border-radius: 4px; color: var(--accent);
     }
 
     /* Market demand styles */
     .demand-badge {
       display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
-      border-radius: 4px; font-size: 11px; font-family: var(--font-mono); font-weight: 600;
+      border-radius: 4px; font-size: 12px; font-family: var(--font-mono); font-weight: 600;
     }
     .demand-badge.high { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
     .demand-badge.medium { background: rgba(234,179,8,0.1); color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
     .demand-badge.low { background: var(--bg-2); color: var(--text-3); border: 1px solid var(--border); }
     .demand-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
     .demand-tag {
-      font-size: 10px; padding: 1px 6px; background: rgba(99,102,241,0.08); color: var(--accent);
+      font-size: 11px; padding: 1px 6px; background: rgba(99,102,241,0.08); color: var(--accent);
       border: 1px solid rgba(99,102,241,0.2); border-radius: 3px;
     }
 
@@ -97,30 +97,30 @@
     }
     .demand-card:hover { border-color: var(--border-hi); }
     .demand-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .demand-card-name { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--white); }
+    .demand-card-name { font-family: var(--font-head); font-size: 15px; font-weight: 600; color: var(--white); }
     .demand-score-bar { height: 4px; border-radius: 2px; background: var(--bg-3); margin: 8px 0; }
     .demand-score-fill { height: 100%; border-radius: 2px; }
-    .demand-card-desc { font-size: 12px; color: var(--text-3); line-height: 1.5; margin-bottom: 8px; }
+    .demand-card-desc { font-size: 13px; color: var(--text-3); line-height: 1.5; margin-bottom: 8px; }
     .status-chip {
-      font-size: 10px; padding: 2px 8px; border-radius: 3px; font-weight: 600; text-transform: uppercase;
+      font-size: 11px; padding: 2px 8px; border-radius: 3px; font-weight: 600; text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .status-chip.strong { background: rgba(34,197,94,0.1); color: var(--green); }
     .status-chip.partial { background: rgba(234,179,8,0.1); color: #eab308; }
     .status-chip.weak { background: rgba(239,68,68,0.08); color: var(--red); }
     .status-chip.none { background: rgba(239,68,68,0.12); color: var(--red); }
-    .demand-detail { font-size: 12px; color: var(--text-2); line-height: 1.5; margin-top: 8px; }
+    .demand-detail { font-size: 13px; color: var(--text-2); line-height: 1.5; margin-top: 8px; }
     .demand-detail strong { color: var(--text); }
     .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
     .tab {
-      padding: 8px 16px; font-size: 13px; color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent;
+      padding: 8px 16px; font-size: 14px; color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent;
       background: none; border-top: none; border-left: none; border-right: none;
     }
     .tab:hover { color: var(--text); }
     .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .survey-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .survey-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
     .survey-stat:last-child { border-bottom: none; }
     .survey-stat-label { color: var(--text-2); }
     .survey-stat-value { color: var(--white); font-family: var(--font-mono); font-weight: 600; }
@@ -131,6 +131,7 @@
     <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
     <nav>
       <a href="/">Dashboard</a>
+      <a href="/timeline">Timeline</a>
       <a href="/competitors">Competitors</a>
       <a href="/features" class="active">Feature Hunt</a>
       <a href="/vchat">vChat</a>
@@ -174,6 +175,7 @@
 
   </div>
 
+  <script src="/toast.js"></script>
   <script>
     let sources = [];
 
@@ -222,14 +224,14 @@
       h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">';
 
       h += '<div>';
-      h += '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">Roles</div>';
+      h += '<div style="font-size:14px;color:var(--text-3);margin-bottom:6px">Roles</div>';
       for (const [role, count] of Object.entries(m.profiles.roles)) {
         h += '<div class="survey-stat"><span class="survey-stat-label">' + esc(role) + '</span><span class="survey-stat-value">' + count + '</span></div>';
       }
       h += '</div>';
 
       h += '<div>';
-      h += '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">Organizations</div>';
+      h += '<div style="font-size:14px;color:var(--text-3);margin-bottom:6px">Organizations</div>';
       for (const [org, count] of Object.entries(m.profiles.organizations)) {
         h += '<div class="survey-stat"><span class="survey-stat-label">' + esc(org) + '</span><span class="survey-stat-value">' + count + '</span></div>';
       }
@@ -242,14 +244,14 @@
       h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">';
 
       h += '<div>';
-      h += '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">CDEs</div>';
+      h += '<div style="font-size:14px;color:var(--text-3);margin-bottom:6px">CDEs</div>';
       for (const [cde, count] of Object.entries(data.tool_landscape.cdes).sort((a,b) => b[1]-a[1])) {
         h += '<div class="survey-stat"><span class="survey-stat-label">' + esc(cde) + '</span><span class="survey-stat-value">' + count + '/' + m.respondents + '</span></div>';
       }
       h += '</div>';
 
       h += '<div>';
-      h += '<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">BIM Tools</div>';
+      h += '<div style="font-size:14px;color:var(--text-3);margin-bottom:6px">BIM Tools</div>';
       for (const [tool, count] of Object.entries(data.tool_landscape.bim_tools).sort((a,b) => b[1]-a[1])) {
         h += '<div class="survey-stat"><span class="survey-stat-label">' + esc(tool) + '</span><span class="survey-stat-value">' + count + '/' + m.respondents + '</span></div>';
       }
@@ -274,7 +276,7 @@
         h += '<div class="demand-card-desc">' + esc(d.description) + '</div>';
         h += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
         h += '<span class="status-chip ' + statusClass + '">' + statusLabel + '</span>';
-        h += '<span style="font-size:11px;color:var(--text-3)">' + d.mentions + ' mentions (' + Math.round(d.mention_rate * 100) + '% of respondents)</span>';
+        h += '<span style="font-size:12px;color:var(--text-3)">' + d.mentions + ' mentions (' + Math.round(d.mention_rate * 100) + '% of respondents)</span>';
         h += '</div>';
         h += '<div class="demand-detail"><strong>Survey evidence:</strong> ' + esc(d.survey_evidence) + '</div>';
         h += '<div class="demand-detail"><strong>Current capability:</strong> ' + esc(d.vitus_capability) + '</div>';
@@ -386,7 +388,7 @@
       if (data.evaluationError) {
         const isRateLimit = data.evaluationError.includes('rate_limit') || data.evaluationError.includes('429');
         const isAuthError = data.evaluationError.includes('API_KEY') || data.evaluationError.includes('authentication') || data.evaluationError.includes('401');
-        h += '<div style="background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px;color:var(--text-3)">';
+        h += '<div style="background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:14px;color:var(--text-3)">';
         if (isRateLimit) {
           h += 'Vitus comparison skipped (rate limited). Features shown without evaluation.';
         } else if (isAuthError) {
@@ -400,7 +402,7 @@
       h += '<h2 style="margin:0">Results — ' + data.features.length + ' features found</h2>';
       h += '<div style="display:flex;gap:8px;align-items:center">';
       if (data.fetchedAt) {
-        h += '<span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">' + new Date(data.fetchedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) + '</span>';
+        h += '<span style="font-size:12px;color:var(--text-3);font-family:var(--font-mono)">' + new Date(data.fetchedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) + '</span>';
       }
       if (showSave) {
         h += '<button id="saveBtn" onclick="saveHuntResults()" style="font-size:12px">Save Results</button>';

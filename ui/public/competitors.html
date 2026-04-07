@@ -15,7 +15,7 @@
 
     .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
 
-    h2 { font-family: var(--font-head); font-size: 16px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
+    h2 { font-family: var(--font-head); font-size: 18px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
     h2:first-child { margin-top: 0; }
 
     .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-bottom: 32px; }
@@ -25,14 +25,14 @@
     }
     .comp-card:hover { border-color: var(--border-hi); }
     .comp-card.active { border-color: var(--accent); }
-    .comp-name { font-family: var(--font-head); font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
-    .comp-domain { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); margin-bottom: 10px; }
-    .comp-angle { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+    .comp-name { font-family: var(--font-head); font-size: 18px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+    .comp-domain { font-family: var(--font-mono); font-size: 13px; color: var(--text-3); margin-bottom: 10px; }
+    .comp-angle { font-size: 14px; color: var(--text-2); line-height: 1.5; }
     .comp-actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
 
     button {
       padding: 6px 14px; background: var(--bg-3); color: var(--text); border: 1px solid var(--border-hi);
-      border-radius: 4px; font-size: 12px; font-family: var(--font-body); cursor: pointer;
+      border-radius: 4px; font-size: 13px; font-family: var(--font-body); cursor: pointer;
     }
     button:hover { background: var(--bg-4); }
     button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
@@ -47,24 +47,24 @@
       background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
       padding: 20px; margin-bottom: 16px;
     }
-    .intel-section h3 { font-family: var(--font-head); font-size: 14px; color: var(--accent); margin-bottom: 12px; font-weight: 500; }
-    .intel-answer { font-size: 13px; color: var(--text); margin-bottom: 16px; line-height: 1.7; }
+    .intel-section h3 { font-family: var(--font-head); font-size: 15px; color: var(--accent); margin-bottom: 12px; font-weight: 500; }
+    .intel-answer { font-size: 14px; color: var(--text); margin-bottom: 16px; line-height: 1.7; }
     .intel-sources { display: flex; flex-direction: column; gap: 10px; }
     .source {
       padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
     }
-    .source-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .source-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
     .source-title a { color: var(--accent); }
-    .source-snippet { font-size: 12px; color: var(--text-3); line-height: 1.5; }
-    .intel-time { font-size: 11px; color: var(--text-4); margin-top: 8px; font-family: var(--font-mono); }
+    .source-snippet { font-size: 13px; color: var(--text-3); line-height: 1.5; }
+    .intel-time { font-size: 12px; color: var(--text-4); margin-top: 8px; font-family: var(--font-mono); }
 
     .scorecard {
       background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
       padding: 20px; margin-bottom: 16px;
     }
-    .scorecard h3 { font-family: var(--font-head); font-size: 14px; color: var(--accent); margin-bottom: 16px; font-weight: 500; }
+    .scorecard h3 { font-family: var(--font-head); font-size: 15px; color: var(--accent); margin-bottom: 16px; font-weight: 500; }
     .dim-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .dim-name { width: 140px; font-size: 12px; color: var(--text-2); flex-shrink: 0; }
+    .dim-name { width: 140px; font-size: 13px; color: var(--text-2); flex-shrink: 0; }
     .dim-bar { flex: 1; height: 20px; background: var(--bg); border-radius: 3px; position: relative; overflow: hidden; }
     .dim-fill { height: 100%; border-radius: 3px; position: absolute; top: 0; left: 0; transition: width 0.6s ease; }
     .dim-fill.vitus { background: rgba(232,159,156,.25); z-index: 1; }
@@ -72,49 +72,49 @@
     .dim-fill.comp.ahead { background: var(--red); opacity: 0.6; }
     .dim-fill.comp.behind { background: var(--green); opacity: 0.6; }
     .dim-fill.comp.even { background: var(--text-3); opacity: 0.4; }
-    .dim-scores { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); width: 60px; text-align: right; flex-shrink: 0; }
-    .dim-reason { font-size: 11px; color: var(--text-3); margin: -4px 0 10px 152px; }
-    .verdict { font-size: 13px; color: var(--text); line-height: 1.7; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .dim-scores { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); width: 60px; text-align: right; flex-shrink: 0; }
+    .dim-reason { font-size: 12px; color: var(--text-3); margin: -4px 0 10px 152px; }
+    .verdict { font-size: 14px; color: var(--text); line-height: 1.7; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
 
     .tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
-    .tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .tab { padding: 10px 20px; font-size: 14px; font-weight: 500; color: var(--text-3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
     .tab:hover { color: var(--text); }
     .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    .matrix-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .matrix-table th { padding: 8px 10px; text-align: left; font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); }
+    .matrix-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .matrix-table th { padding: 8px 10px; text-align: left; font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); }
     .matrix-table th.comp-col { text-align: center; min-width: 80px; }
     .matrix-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
     .matrix-table tr:hover { background: var(--bg-1); }
     .demand-name { font-weight: 500; color: var(--text); }
-    .demand-score { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
-    .vitus-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .demand-score { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); }
+    .vitus-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
     .vitus-badge.strong { background: rgba(34,197,94,0.15); color: var(--green); }
     .vitus-badge.partial { background: rgba(250,204,21,0.15); color: #facc15; }
     .vitus-badge.weak { background: rgba(249,115,22,0.15); color: #f97316; }
     .vitus-badge.none { background: rgba(239,68,68,0.12); color: var(--red); }
     .coverage-cell { text-align: center; }
-    .cov-dot { display: inline-block; width: 24px; height: 24px; border-radius: 4px; line-height: 24px; text-align: center; font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+    .cov-dot { display: inline-block; width: 24px; height: 24px; border-radius: 4px; line-height: 24px; text-align: center; font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
     .cov-0 { background: rgba(239,68,68,0.1); color: var(--red); }
     .cov-1 { background: rgba(249,115,22,0.12); color: #f97316; }
     .cov-2 { background: rgba(250,204,21,0.12); color: #facc15; }
     .cov-3 { background: rgba(34,197,94,0.12); color: var(--green); }
-    .gap-text { font-size: 11px; color: var(--text-2); max-width: 350px; line-height: 1.5; }
+    .gap-text { font-size: 12px; color: var(--text-2); max-width: 350px; line-height: 1.5; }
     .matrix-loading { text-align: center; padding: 40px; color: var(--text-3); font-style: italic; }
-    .matrix-legend { display: flex; gap: 16px; margin-bottom: 16px; font-size: 11px; color: var(--text-3); align-items: center; }
-    .matrix-legend .cov-dot { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
+    .matrix-legend { display: flex; gap: 16px; margin-bottom: 16px; font-size: 12px; color: var(--text-3); align-items: center; }
+    .matrix-legend .cov-dot { width: 18px; height: 18px; line-height: 18px; font-size: 11px; }
 
     .add-form {
       display: none; background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
       padding: 20px; margin-bottom: 24px;
     }
     .add-form.show { display: block; }
-    .add-form label { display: block; font-size: 12px; color: var(--text-3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .add-form label { display: block; font-size: 13px; color: var(--text-3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
     .add-form input, .add-form textarea {
       width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border-hi);
-      border-radius: 4px; color: var(--text); font-size: 13px; font-family: inherit;
+      border-radius: 4px; color: var(--text); font-size: 14px; font-family: inherit;
       margin-bottom: 12px; outline: none;
     }
     .add-form input:focus, .add-form textarea:focus { border-color: var(--accent); }
@@ -127,6 +127,7 @@
     <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
     <nav>
       <a href="/">Dashboard</a>
+      <a href="/timeline">Timeline</a>
       <a href="/competitors" class="active">Competitors</a>
       <a href="/features">Feature Hunt</a>
       <a href="/vchat">vChat</a>
@@ -171,12 +172,13 @@
         <h2 style="margin:0">How competitors address market demands</h2>
         <button class="primary" onclick="loadDemandMatrix()" id="btnMatrix">Analyze</button>
       </div>
-      <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Cross-references saved competitor intel with the Onsight survey (25 AEC professionals). Requires competitor intel to be fetched first.</p>
+      <p style="font-size:13px;color:var(--text-3);margin-bottom:16px">Cross-references saved competitor intel with the Onsight survey (25 AEC professionals). Requires competitor intel to be fetched first.</p>
       <div id="demandMatrix"><div class="matrix-loading">Click Analyze to evaluate competitor coverage against market demands.</div></div>
     </div>
 
   </div>
 
+  <script src="/toast.js"></script>
   <script>
     let competitors = [];
     let intelCache = {};
@@ -208,7 +210,7 @@
           <div class="comp-name">${esc(c.name)}</div>
           <div class="comp-domain">${esc(c.domain)}</div>
           <div class="comp-angle">${esc(c.angle)}</div>
-          ${hasSaved ? '<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-3);margin-top:8px">Last scan: ' + savedDate + '</div>' : ''}
+          ${hasSaved ? '<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);margin-top:8px">Last scan: ' + savedDate + '</div>' : ''}
           <div class="comp-actions">
             <button class="primary" onclick="fetchIntel(${i})" id="btn-${i}">${hasSaved ? 'View Intel' : 'Get Intel'}</button>
             <button onclick="refreshIntel(${i})" id="rbtn-${i}" style="${hasSaved ? '' : 'display:none'}">Refresh</button>
@@ -266,7 +268,7 @@
       let h = `<h2 style="margin-top:16px">${esc(data.name)} — Intelligence</h2>`;
 
       if (data.angle) {
-        h += `<div style="color:#999;font-size:13px;margin-bottom:16px"><strong style="color:#ccc">Strategic angle:</strong> ${esc(data.angle)}</div>`;
+        h += `<div style="color:#999;font-size:14px;margin-bottom:16px"><strong style="color:#ccc">Strategic angle:</strong> ${esc(data.angle)}</div>`;
       }
 
       for (const section of data.sections) {
@@ -294,11 +296,11 @@
         const isAuthError = data.scorecardError.includes('API_KEY') || data.scorecardError.includes('authentication') || data.scorecardError.includes('401');
         h += '<div class="scorecard"><h3>Vitus vs ' + esc(data.name) + ' — Scorecard</h3>';
         if (isRateLimit) {
-          h += '<div style="color:var(--text-3);font-size:13px">Rate limited. Try again in a moment.</div>';
+          h += '<div style="color:var(--text-3);font-size:14px">Rate limited. Try again in a moment.</div>';
         } else if (isAuthError) {
-          h += '<div style="color:var(--text-3);font-size:13px">Add your ANTHROPIC_API_KEY in <a href="/settings">Settings</a> to enable Vitus product comparison.</div>';
+          h += '<div style="color:var(--text-3);font-size:14px">Add your ANTHROPIC_API_KEY in <a href="/settings">Settings</a> to enable Vitus product comparison.</div>';
         } else {
-          h += '<div style="color:var(--text-3);font-size:13px">' + esc(data.scorecardError) + '</div>';
+          h += '<div style="color:var(--text-3);font-size:14px">' + esc(data.scorecardError) + '</div>';
         }
         h += '</div>';
       } else if (data.scorecard && data.scorecard.dimensions) {
@@ -486,7 +488,7 @@
       h += '</tbody></table>';
 
       if (data.error) {
-        h += '<div style="margin-top:12px;font-size:11px;color:var(--text-3)">Note: competitor scores unavailable (' + esc(data.error) + '). Showing Vitus status only.</div>';
+        h += '<div style="margin-top:12px;font-size:12px;color:var(--text-3)">Note: competitor scores unavailable (' + esc(data.error) + '). Showing Vitus status only.</div>';
       }
 
       el.innerHTML = h;

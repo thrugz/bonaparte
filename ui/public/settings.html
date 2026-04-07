@@ -15,7 +15,7 @@
 
     .container { max-width: 900px; margin: 0 auto; padding: 24px; }
 
-    h2 { font-family: var(--font-head); font-size: 16px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
+    h2 { font-family: var(--font-head); font-size: 18px; color: var(--accent); margin: 32px 0 16px; font-weight: 500; }
     h2:first-child { margin-top: 0; }
 
     .token-grid { display: grid; gap: 12px; }
@@ -23,15 +23,15 @@
       display: grid; grid-template-columns: 180px 1fr 80px 80px; gap: 12px; align-items: center;
       padding: 10px 14px; background: var(--bg-1); border: 1px solid var(--border); border-radius: 6px;
     }
-    .token-label { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); }
-    .token-value { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
-    .token-status { font-size: 12px; text-align: center; }
+    .token-label { font-family: var(--font-mono); font-size: 13px; color: var(--text-3); }
+    .token-value { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+    .token-status { font-size: 13px; text-align: center; }
     .token-status.ok { color: var(--green); }
     .token-status.fail { color: var(--red); }
     .token-status.pending { color: var(--text-3); }
     button {
       padding: 6px 14px; background: var(--bg-3); color: var(--text); border: 1px solid var(--border-hi);
-      border-radius: 4px; font-size: 12px; font-family: var(--font-body); cursor: pointer;
+      border-radius: 4px; font-size: 13px; font-family: var(--font-body); cursor: pointer;
     }
     button:hover { background: var(--bg-4); }
     button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
@@ -39,17 +39,17 @@
     button:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .job-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    .job-table th { text-align: left; font-size: 12px; color: var(--text-3); padding: 8px 12px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
-    .job-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
-    .job-table .mono { font-family: var(--font-mono); font-size: 12px; }
+    .job-table th { text-align: left; font-size: 13px; color: var(--text-3); padding: 8px 12px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
+    .job-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .job-table .mono { font-family: var(--font-mono); font-size: 13px; }
 
     .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    .log-table th { text-align: left; font-size: 11px; color: var(--text-3); padding: 6px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
-    .log-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 12px; font-family: var(--font-mono); }
+    .log-table th { text-align: left; font-size: 12px; color: var(--text-3); padding: 6px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
+    .log-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; font-family: var(--font-mono); }
     .log-table .ok { color: var(--green); }
     .log-table .error { color: var(--red); }
     .log-table .running { color: var(--accent); }
-    .log-table .summary { color: var(--text-2); font-size: 11px; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-table .summary { color: var(--text-2); font-size: 12px; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -57,6 +57,7 @@
     <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
     <nav>
       <a href="/">Dashboard</a>
+      <a href="/timeline">Timeline</a>
       <a href="/competitors">Competitors</a>
       <a href="/features">Feature Hunt</a>
       <a href="/vchat">vChat</a>
@@ -85,6 +86,7 @@
 
   </div>
 
+  <script src="/toast.js"></script>
   <script>
     async function checkAuth() {
       const r = await fetch('/api/me');

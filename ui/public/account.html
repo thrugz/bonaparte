@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="stylesheet" href="/brand.css">
+  <title>Bonaparte — Account</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    /* ── Account header ── */
+    .acct-header {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+      padding: 24px; margin-bottom: 24px;
+    }
+    .acct-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+    .acct-name { font-family: var(--font-head); font-size: 24px; color: var(--white); font-weight: 600; }
+    .acct-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .stats-row { display: flex; gap: 32px; flex-wrap: wrap; }
+    .stat-item { display: flex; flex-direction: column; align-items: center; }
+    .stat-num { font-family: var(--font-head); font-size: 28px; font-weight: 700; color: var(--white); line-height: 1; }
+    .stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; color: var(--text-3); letter-spacing: 1px; margin-top: 4px; }
+
+    button {
+      padding: 6px 14px; background: var(--bg-3); color: var(--text); border: 1px solid var(--border-hi);
+      border-radius: 4px; font-size: 13px; font-family: var(--font-body); cursor: pointer;
+    }
+    button:hover { background: var(--bg-4); }
+    button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    button.primary:hover { background: var(--v5); }
+
+    /* ── Two-column layout ── */
+    .layout { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ── Contacts table ── */
+    .panel {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+      padding: 20px; margin-bottom: 16px;
+    }
+    .panel h3 {
+      font-family: var(--font-head); font-size: 15px; color: var(--accent);
+      margin-bottom: 12px; font-weight: 500;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px;
+      border-bottom: 1px solid var(--border); cursor: pointer; user-select: none;
+      white-space: nowrap;
+    }
+    th:hover { color: var(--text); }
+    th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.5; }
+    th.sorted .sort-arrow { opacity: 1; color: var(--accent); }
+    td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    td a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--text-4); }
+    td a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Score bars ── */
+    .sbar { display: flex; align-items: center; gap: 10px; }
+    .sbar-t { flex: 1; height: 2px; background: var(--bg-3); overflow: hidden; }
+    .sbar-f { height: 100%; transition: width .8s cubic-bezier(.16,1,.3,1); }
+    .sbar-v {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+      min-width: 22px; text-align: right;
+    }
+
+    /* ── Tier badges ── */
+    .tier-badge {
+      display: inline-block; padding: 1px 8px; border-radius: 3px;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+    }
+    .tier-badge.t1 { background: rgba(34,197,94,0.12); color: var(--green); }
+    .tier-badge.t2 { background: rgba(234,179,8,0.12); color: #eab308; }
+    .tier-badge.t3 { background: rgba(239,68,68,0.1); color: var(--red); }
+    .tier-badge.t0 { background: var(--bg-3); color: var(--text-4); }
+
+    /* ── Deals ── */
+    .deal-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 14px; margin-bottom: 8px; transition: border-color 0.15s;
+    }
+    .deal-card:hover { border-color: var(--border-hi); }
+    .deal-name { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+    .deal-meta { font-size: 12px; color: var(--text-3); display: flex; flex-wrap: wrap; gap: 12px; }
+    .deal-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* ── Right column panels ── */
+    .health-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .health-row:last-child { border-bottom: none; }
+    .health-label { font-size: 13px; color: var(--text-2); }
+    .health-value { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--white); }
+
+    .dist-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 2px; margin-top: 8px; }
+    .dist-seg { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+
+    .signal-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .signal-item:last-child { border-bottom: none; }
+    .signal-type {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;
+    }
+    .signal-type.s3 { color: var(--red); }
+    .signal-type.s2 { color: var(--amber); }
+    .signal-type.s1 { color: var(--text-3); }
+    .signal-desc { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+    .quick-action {
+      display: block; width: 100%; text-align: left; padding: 10px 12px;
+      margin-bottom: 6px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 13px; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .quick-action:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+    /* ── Email threads ── */
+    .email-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .email-item:last-child { border-bottom: none; }
+    .email-dir {
+      display: inline-block; font-family: var(--font-mono); font-size: 10px;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 1px 6px; border-radius: 3px; margin-right: 6px;
+    }
+    .email-dir.out { background: rgba(99,102,241,0.08); color: #818cf8; }
+    .email-dir.in { background: rgba(34,197,94,0.1); color: var(--green); }
+    .email-subj { font-size: 13px; color: var(--white); font-weight: 500; }
+    .email-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; font-family: var(--font-mono); }
+
+    .empty-state { color: var(--text-3); font-size: 13px; font-style: italic; padding: 12px 0; }
+
+    /* ── Skeleton shimmer ── */
+    .skeleton { background: var(--bg-3); border-radius: 4px; position: relative; overflow: hidden; }
+    .skeleton::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer { to { left: 100%; } }
+    .skel-line { height: 14px; margin-bottom: 8px; }
+    .skel-line.w60 { width: 60%; }
+    .skel-line.w80 { width: 80%; }
+    .skel-line.w40 { width: 40%; }
+    .skel-block { height: 200px; }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
+    <nav>
+      <a href="/">Dashboard</a>
+      <a href="/timeline">Timeline</a>
+      <a href="/competitors">Competitors</a>
+      <a href="/features">Feature Hunt</a>
+      <a href="/vchat">vChat</a>
+      <a href="/content">Content</a>
+      <a href="/settings">Settings</a>
+      <span class="nav-sep"></span>
+      <a href="/logout" class="logout">Log out</a>
+    </nav>
+  </div>
+
+  <div class="container">
+    <!-- Account header -->
+    <div class="acct-header" id="acctHeader">
+      <div class="acct-top">
+        <div class="acct-name" id="acctName">Loading...</div>
+        <div class="acct-actions">
+          <a id="hubspotLink" href="#" target="_blank">
+            <button class="primary">Open in HubSpot</button>
+          </a>
+          <a id="vchatLink" href="#">
+            <button>Discuss in vChat</button>
+          </a>
+        </div>
+      </div>
+      <div class="stats-row" id="statsRow">
+        <div class="stat-item"><div class="stat-num skeleton" style="width:40px;height:28px"></div><div class="stat-label">Contacts</div></div>
+        <div class="stat-item"><div class="stat-num skeleton" style="width:40px;height:28px"></div><div class="stat-label">Avg Score</div></div>
+        <div class="stat-item"><div class="stat-num skeleton" style="width:40px;height:28px"></div><div class="stat-label">Tier 1 %</div></div>
+        <div class="stat-item"><div class="stat-num skeleton" style="width:40px;height:28px"></div><div class="stat-label">Active (30d)</div></div>
+      </div>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="layout">
+      <!-- Left column -->
+      <div class="left-col">
+        <div class="panel" id="contactsPanel">
+          <h3>Contacts</h3>
+          <div id="contactsTable">
+            <div class="skeleton skel-block"></div>
+          </div>
+        </div>
+        <div class="panel" id="dealsPanel">
+          <h3>Deals</h3>
+          <div id="dealsList">
+            <div class="skeleton skel-line w80"></div>
+            <div class="skeleton skel-line w60"></div>
+            <div class="skeleton skel-line w40"></div>
+          </div>
+        </div>
+        <div class="panel" id="emailsPanel">
+          <h3>Recent Emails</h3>
+          <div id="emailsList">
+            <div class="skeleton skel-line w80"></div>
+            <div class="skeleton skel-line w60"></div>
+            <div class="skeleton skel-line w40"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div class="right-col">
+        <div class="panel" id="healthPanel">
+          <h3>Health Indicators</h3>
+          <div id="healthContent">
+            <div class="skeleton skel-line w80"></div>
+            <div class="skeleton skel-line w60"></div>
+            <div class="skeleton skel-line w80"></div>
+          </div>
+        </div>
+        <div class="panel" id="signalsPanel">
+          <h3>Signals</h3>
+          <div id="signalsContent">
+            <div class="skeleton skel-line w80"></div>
+            <div class="skeleton skel-line w60"></div>
+          </div>
+        </div>
+        <div class="panel" id="actionsPanel">
+          <h3>Quick Actions</h3>
+          <div id="actionsContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/toast.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const COMPANY = params.get('name') || '';
+    const HS_PORTAL = '146127203';
+
+    let allContacts = [];
+    let sortCol = 'score';
+    let sortDir = -1; // descending
+
+    // ── Score color helper ──
+    const sc = s => s >= 7 ? 'var(--green)' : s >= 3 ? 'var(--amber)' : s >= 1 ? 'var(--red)' : 'var(--text-4)';
+
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function tierClass(t) { return t === 1 ? 't1' : t === 2 ? 't2' : t === 3 ? 't3' : 't0'; }
+    function tierLabel(t) { return t === 1 ? 'T1' : t === 2 ? 'T2' : t === 3 ? 'T3' : 'Inactive'; }
+
+    function daysAgo(dateStr) {
+      if (!dateStr) return null;
+      return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '\u2014';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // ── Auth check ──
+    async function checkAuth() {
+      const r = await fetch('/api/me');
+      if (r.status === 401) location.href = '/login';
+    }
+
+    // ── Init ──
+    async function init() {
+      await checkAuth();
+      if (!COMPANY) {
+        document.getElementById('acctName').textContent = 'No account specified';
+        return;
+      }
+
+      document.title = 'Bonaparte \u2014 ' + COMPANY;
+      document.getElementById('acctName').textContent = COMPANY;
+
+      const hsQuery = encodeURIComponent(COMPANY);
+      document.getElementById('hubspotLink').href =
+        `https://app-eu1.hubspot.com/contacts/${HS_PORTAL}/objects/0-2/views/all/list?query=${hsQuery}`;
+      document.getElementById('vchatLink').href =
+        `/vchat?context=account&data=${encodeURIComponent(COMPANY)}&q=${encodeURIComponent('Brief me on ' + COMPANY)}`;
+
+      renderQuickActions();
+
+      // Parallel fetch
+      const [contactsRes, dealsRes, memoryRes, emailsRes] = await Promise.all([
+        fetch('/api/contacts/all').then(r => r.json()).catch(() => []),
+        fetch('/api/deals').then(r => r.json()).catch(() => []),
+        fetch('/api/memory').then(r => r.json()).catch(() => []),
+        fetch('/api/emails').then(r => r.json()).catch(() => []),
+      ]);
+
+      // Filter contacts by company
+      allContacts = (Array.isArray(contactsRes) ? contactsRes : []).filter(c =>
+        c.company && c.company.toLowerCase().includes(COMPANY.toLowerCase())
+      );
+
+      // Filter deals by name match (deals don't have a company field, match on dealname)
+      const deals = (Array.isArray(dealsRes) ? dealsRes : []).filter(d =>
+        d.dealname && d.dealname.toLowerCase().includes(COMPANY.toLowerCase())
+      );
+
+      // Filter signals by tag
+      const signals = (Array.isArray(memoryRes) ? memoryRes : []).filter(n =>
+        n.tags && n.tags.some(t => t.toLowerCase().includes(COMPANY.toLowerCase()))
+      );
+
+      // Filter emails by company domain
+      const companyLower = COMPANY.toLowerCase();
+      const emails = (Array.isArray(emailsRes) ? emailsRes : []).filter(e =>
+        (e.from && e.from.toLowerCase().includes(companyLower)) ||
+        (e.to && e.to.toLowerCase().includes(companyLower)) ||
+        (e.subject && e.subject.toLowerCase().includes(companyLower))
+      );
+
+      renderStats(allContacts);
+      renderContacts();
+      renderDeals(deals);
+      renderEmails(emails);
+      renderHealth(allContacts);
+      renderSignals(signals);
+    }
+
+    // ── Stats row ──
+    function renderStats(contacts) {
+      const total = contacts.length;
+      const avgScore = total ? (contacts.reduce((s, c) => s + c.score, 0) / total) : 0;
+      const t1Pct = total ? Math.round(contacts.filter(c => c.tier === 1).length / total * 100) : 0;
+      const now = Date.now();
+      const active30d = contacts.filter(c => c.lastLogin && (now - new Date(c.lastLogin).getTime()) < 30 * 86400000).length;
+
+      document.getElementById('statsRow').innerHTML = `
+        <div class="stat-item"><div class="stat-num">${total}</div><div class="stat-label">Contacts</div></div>
+        <div class="stat-item"><div class="stat-num" style="color:${sc(avgScore)}">${avgScore.toFixed(1)}</div><div class="stat-label">Avg Score</div></div>
+        <div class="stat-item"><div class="stat-num">${t1Pct}%</div><div class="stat-label">Tier 1 %</div></div>
+        <div class="stat-item"><div class="stat-num">${active30d}</div><div class="stat-label">Active (30d)</div></div>
+      `;
+    }
+
+    // ── Contacts table ──
+    function renderContacts() {
+      const sorted = [...allContacts].sort((a, b) => {
+        let va = a[sortCol], vb = b[sortCol];
+        if (sortCol === 'name') { va = (va || '').toLowerCase(); vb = (vb || '').toLowerCase(); }
+        if (sortCol === 'lastLogin') { va = va ? new Date(va).getTime() : 0; vb = vb ? new Date(vb).getTime() : 0; }
+        if (va < vb) return -1 * sortDir;
+        if (va > vb) return 1 * sortDir;
+        return 0;
+      });
+
+      const arrow = dir => dir === 1 ? '\u25B2' : '\u25BC';
+
+      let h = '<table><thead><tr>';
+      const cols = [
+        { key: 'name', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'score', label: 'Score' },
+        { key: 'tier', label: 'Tier' },
+        { key: 'lastLogin', label: 'Last Login' },
+      ];
+      for (const col of cols) {
+        const active = sortCol === col.key;
+        h += `<th class="${active ? 'sorted' : ''}" onclick="setSort('${col.key}')">${col.label}<span class="sort-arrow">${active ? arrow(sortDir) : '\u25BC'}</span></th>`;
+      }
+      h += '</tr></thead><tbody>';
+
+      if (sorted.length === 0) {
+        h += '<tr><td colspan="5" class="empty-state">No contacts found for this account.</td></tr>';
+      }
+
+      for (const c of sorted) {
+        const pct = Math.round(c.score / 9 * 100);
+        const col = sc(c.score);
+        h += '<tr>';
+        h += `<td><a href="${esc(c.url)}" target="_blank">${esc(c.name)}</a></td>`;
+        h += `<td style="color:var(--text-3);font-size:12px">${esc(c.email)}</td>`;
+        h += `<td><div class="sbar"><div class="sbar-t"><div class="sbar-f" style="width:${pct}%;background:${col}"></div></div><span class="sbar-v" style="color:${col}">${c.score}</span></div></td>`;
+        h += `<td><span class="tier-badge ${tierClass(c.tier)}">${tierLabel(c.tier)}</span></td>`;
+        h += `<td style="font-family:var(--font-mono);font-size:12px;color:var(--text-3)">${formatDate(c.lastLogin)}</td>`;
+        h += '</tr>';
+      }
+
+      h += '</tbody></table>';
+      document.getElementById('contactsTable').innerHTML = h;
+    }
+
+    function setSort(col) {
+      if (sortCol === col) {
+        sortDir = sortDir === 1 ? -1 : 1;
+      } else {
+        sortCol = col;
+        sortDir = col === 'name' || col === 'email' ? 1 : -1;
+      }
+      renderContacts();
+    }
+
+    // ── Deals ──
+    function renderDeals(deals) {
+      const el = document.getElementById('dealsList');
+      if (!deals.length) {
+        el.innerHTML = '<div class="empty-state">No deals associated with this account.</div>';
+        return;
+      }
+      let h = '';
+      for (const d of deals) {
+        h += '<div class="deal-card">';
+        h += `<div class="deal-name"><a href="${esc(d.url)}" target="_blank">${esc(d.dealname)}</a></div>`;
+        h += '<div class="deal-meta">';
+        if (d.dealstage) h += `<span>Stage: ${esc(d.dealstage)}</span>`;
+        if (d.amount) h += `<span>Amount: ${esc(d.amount)}</span>`;
+        if (d.closedate) h += `<span>Close: ${formatDate(d.closedate)}</span>`;
+        if (d.hubspot_owner_id) h += `<span>Owner: ${esc(d.hubspot_owner_id)}</span>`;
+        h += '</div></div>';
+      }
+      el.innerHTML = h;
+    }
+
+    // ── Health indicators ──
+    function renderHealth(contacts) {
+      const el = document.getElementById('healthContent');
+      if (!contacts.length) {
+        el.innerHTML = '<div class="empty-state">No data available.</div>';
+        return;
+      }
+
+      // Engagement trend: compare avg score to baseline 6.1
+      const avg = contacts.reduce((s, c) => s + c.score, 0) / contacts.length;
+      let trend, trendColor;
+      if (avg > 6.5) { trend = '\u25B2 Above baseline'; trendColor = 'var(--green)'; }
+      else if (avg < 5.5) { trend = '\u25BC Below baseline'; trendColor = 'var(--red)'; }
+      else { trend = '\u25CF Stable'; trendColor = 'var(--amber)'; }
+
+      // Days since last login (any user)
+      const logins = contacts.filter(c => c.lastLogin).map(c => new Date(c.lastLogin).getTime());
+      const lastAny = logins.length ? Math.max(...logins) : null;
+      const daysSinceLast = lastAny ? Math.floor((Date.now() - lastAny) / 86400000) : null;
+      const daysColor = daysSinceLast === null ? 'var(--text-4)' : daysSinceLast <= 7 ? 'var(--green)' : daysSinceLast <= 30 ? 'var(--amber)' : 'var(--red)';
+
+      // Score distribution
+      const t1 = contacts.filter(c => c.tier === 1).length;
+      const t2 = contacts.filter(c => c.tier === 2).length;
+      const t3 = contacts.filter(c => c.tier === 3).length;
+      const t0 = contacts.filter(c => c.tier === 0).length;
+      const total = contacts.length;
+
+      let h = '';
+      h += `<div class="health-row"><span class="health-label">Engagement trend</span><span class="health-value" style="color:${trendColor}">${trend}</span></div>`;
+      h += `<div class="health-row"><span class="health-label">Days since last login</span><span class="health-value" style="color:${daysColor}">${daysSinceLast !== null ? daysSinceLast + 'd' : 'N/A'}</span></div>`;
+      h += `<div class="health-row"><span class="health-label">Score distribution</span><span class="health-value" style="font-size:11px">${t1} T1 / ${t2} T2 / ${t3} T3 / ${t0} Inactive</span></div>`;
+      h += '<div class="dist-bar">';
+      if (total > 0) {
+        h += `<div class="dist-seg" style="width:${t1/total*100}%;background:var(--green)"></div>`;
+        h += `<div class="dist-seg" style="width:${t2/total*100}%;background:#eab308"></div>`;
+        h += `<div class="dist-seg" style="width:${t3/total*100}%;background:var(--red)"></div>`;
+        h += `<div class="dist-seg" style="width:${t0/total*100}%;background:var(--text-4)"></div>`;
+      }
+      h += '</div>';
+
+      el.innerHTML = h;
+    }
+
+    // ── Signals ──
+    function renderSignals(signals) {
+      const el = document.getElementById('signalsContent');
+      if (!signals.length) {
+        el.innerHTML = '<div class="empty-state">No signals for this account.</div>';
+        return;
+      }
+      // Sort by score descending
+      signals.sort((a, b) => (b.score || 0) - (a.score || 0));
+      let h = '';
+      for (const s of signals) {
+        const scoreClass = s.score >= 3 ? 's3' : s.score >= 2 ? 's2' : 's1';
+        h += '<div class="signal-item">';
+        h += `<div class="signal-type ${scoreClass}">${esc(s.type)} ${s.score}</div>`;
+        h += `<div class="signal-desc">${esc(s.description)}</div>`;
+        if (s.deadline) h += `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-4);margin-top:4px">Deadline: ${formatDate(s.deadline)}</div>`;
+        h += '</div>';
+      }
+      el.innerHTML = h;
+    }
+
+    // ── Emails ──
+    function renderEmails(emails) {
+      const el = document.getElementById('emailsList');
+      if (!emails.length) {
+        el.innerHTML = '<div class="empty-state">No emails found for this account.</div>';
+        return;
+      }
+      // Sort newest first, cap at 20
+      emails.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      const shown = emails.slice(0, 20);
+      let h = '';
+      for (const e of shown) {
+        h += '<div class="email-item">';
+        h += `<span class="email-dir ${e.direction === 'in' ? 'in' : 'out'}">${e.direction === 'in' ? 'IN' : 'OUT'}</span>`;
+        h += `<span class="email-subj">${esc(e.subject)}</span>`;
+        h += `<div class="email-meta">${esc(e.direction === 'in' ? e.from : e.to)} &middot; ${formatDate(e.timestamp)}</div>`;
+        h += '</div>';
+      }
+      if (emails.length > 20) {
+        h += `<div style="font-size:12px;color:var(--text-3);padding-top:8px">+ ${emails.length - 20} more emails</div>`;
+      }
+      el.innerHTML = h;
+    }
+
+    // ── Quick actions ──
+    function renderQuickActions() {
+      const el = document.getElementById('actionsContent');
+      const encodedName = encodeURIComponent(COMPANY);
+      el.innerHTML = `
+        <a class="quick-action" href="/vchat?context=account&data=${encodedName}&q=${encodeURIComponent('Draft an intro email for ' + COMPANY)}">Draft intro email</a>
+        <a class="quick-action" href="/vchat?context=account&data=${encodedName}&q=${encodeURIComponent('Who are the champion candidates at ' + COMPANY + '?')}">Check champion candidates</a>
+        <a class="quick-action" href="/vchat?context=account&data=${encodedName}&q=${encodeURIComponent('Run a score audit for ' + COMPANY)}">Score audit</a>
+      `;
+    }
+
+    init();
+  </script>
+</body>
+</html>

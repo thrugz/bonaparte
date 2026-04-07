@@ -14,8 +14,8 @@
     .chat-container { flex: 1; display: flex; flex-direction: column; max-width: 900px; margin: 0 auto; width: 100%; padding: 0 24px; overflow: hidden; }
 
     .chat-header { padding: 20px 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .chat-header h2 { font-family: var(--font-head); font-size: 16px; color: var(--accent); font-weight: 500; margin: 0; }
-    .chat-header p { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+    .chat-header h2 { font-family: var(--font-head); font-size: 18px; color: var(--accent); font-weight: 500; margin: 0; }
+    .chat-header p { font-size: 13px; color: var(--text-3); margin-top: 4px; }
 
     .messages { flex: 1; overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 16px; }
 
@@ -26,7 +26,7 @@
     .msg.assistant { align-self: flex-start; }
 
     .msg-bubble {
-      padding: 12px 16px; border-radius: 12px; font-size: 13px; line-height: 1.7;
+      padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.7;
       white-space: pre-wrap; word-wrap: break-word;
     }
     .msg.user .msg-bubble {
@@ -39,11 +39,11 @@
     .msg.assistant .msg-bubble strong { color: var(--white); }
     .msg.assistant .msg-bubble a { color: var(--accent); }
 
-    .msg-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-3); margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase; }
+    .msg-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase; }
     .msg.user .msg-label { text-align: right; }
 
     .msg-context {
-      font-size: 11px; color: var(--text-3); margin-bottom: 4px; padding: 4px 10px;
+      font-size: 12px; color: var(--text-3); margin-bottom: 4px; padding: 4px 10px;
       background: var(--bg-1); border: 1px solid var(--border); border-radius: 6px;
       font-family: var(--font-mono);
     }
@@ -63,14 +63,14 @@
     .input-row { display: flex; gap: 8px; }
     .input-row textarea {
       flex: 1; padding: 12px 16px; background: var(--bg-1); border: 1px solid var(--border-hi);
-      border-radius: 8px; color: var(--text); font-size: 13px; font-family: var(--font-body);
+      border-radius: 8px; color: var(--text); font-size: 14px; font-family: var(--font-body);
       resize: none; outline: none; min-height: 44px; max-height: 120px; line-height: 1.5;
     }
     .input-row textarea:focus { border-color: var(--accent); }
     .input-row textarea::placeholder { color: var(--text-4); }
     .send-btn {
       padding: 0 20px; background: var(--accent); color: var(--bg); border: none;
-      border-radius: 8px; font-size: 13px; font-family: var(--font-body); font-weight: 600;
+      border-radius: 8px; font-size: 14px; font-family: var(--font-body); font-weight: 600;
       cursor: pointer; white-space: nowrap;
     }
     .send-btn:hover { background: var(--v5); }
@@ -79,14 +79,14 @@
     .quick-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .quick-btn {
       padding: 5px 12px; background: var(--bg-2); border: 1px solid var(--border);
-      border-radius: 6px; font-size: 11px; color: var(--text-2); cursor: pointer;
+      border-radius: 6px; font-size: 12px; color: var(--text-2); cursor: pointer;
       font-family: var(--font-body); text-align: left; line-height: 1.4;
     }
     .quick-btn:hover { background: var(--bg-3); color: var(--text); border-color: var(--border-hi); }
 
     .pattern-group { margin-top: 10px; }
     .pattern-label {
-      font-family: var(--font-mono); font-size: 9px; color: var(--text-4);
+      font-family: var(--font-mono); font-size: 10px; color: var(--text-4);
       text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;
       display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
     }
@@ -94,7 +94,7 @@
     .pattern-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
     .pattern-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
     .patterns-toggle {
-      font-family: var(--font-mono); font-size: 9px; color: var(--text-4); cursor: pointer;
+      font-family: var(--font-mono); font-size: 10px; color: var(--text-4); cursor: pointer;
       background: none; border: 1px solid var(--border); border-radius: 4px; padding: 3px 10px;
       margin-top: 6px;
     }
@@ -102,7 +102,16 @@
 
     .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
     .empty-state .logo-mark { font-size: 48px; opacity: 0.15; }
-    .empty-state p { color: var(--text-3); font-size: 13px; max-width: 400px; text-align: center; line-height: 1.7; }
+    .empty-state p { color: var(--text-3); font-size: 14px; max-width: 400px; text-align: center; line-height: 1.7; }
+
+    .msg-actions { display: flex; gap: 6px; margin-top: 6px; }
+    .msg-action-btn {
+      padding: 3px 10px; background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: 5px; font-size: 12px; color: var(--text-3); cursor: pointer;
+      font-family: var(--font-body); line-height: 1.4; transition: all 0.15s ease;
+    }
+    .msg-action-btn:hover { background: var(--bg-3); color: var(--text); border-color: var(--border-hi); }
+    .msg-action-btn.confirmed { color: var(--accent); border-color: var(--accent); pointer-events: none; }
   </style>
 </head>
 <body>
@@ -110,6 +119,7 @@
     <a href="/" class="logo"><img src="/vitus-logo.png" alt="Vitus"><span class="sep"></span><span class="sub">Bonaparte</span></a>
     <nav>
       <a href="/">Dashboard</a>
+      <a href="/timeline">Timeline</a>
       <a href="/competitors">Competitors</a>
       <a href="/features">Feature Hunt</a>
       <a href="/vchat" class="active">vChat</a>
@@ -142,6 +152,7 @@
     </div>
   </div>
 
+  <script src="/toast.js"></script>
   <script>
     let chatHistory = [];
     let panelContext = null;
@@ -191,11 +202,61 @@
         html += '<div class="msg-context">' + esc(contextLabel) + '</div>';
       }
       html += '<div class="msg-bubble">' + (role === 'assistant' ? formatMarkdown(content) : esc(content)) + '</div>';
+      if (role === 'assistant' && content) {
+        html += buildActionButtons(content);
+      }
       div.innerHTML = html;
       el.appendChild(div);
       el.scrollTop = el.scrollHeight;
       return div;
     }
+
+    // Store message texts by index for action button lookups
+    let msgTexts = [];
+
+    function buildActionButtons(text) {
+      const idx = msgTexts.length;
+      msgTexts.push(text);
+      return '<div class="msg-actions">'
+        + '<button class="msg-action-btn" data-action="copy" data-msg-idx="' + idx + '">Copy</button>'
+        + '<button class="msg-action-btn" data-action="save" data-msg-idx="' + idx + '">Save to Drafts</button>'
+        + '</div>';
+    }
+
+    // Event delegation for action buttons
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.msg-action-btn');
+      if (!btn) return;
+      const idx = parseInt(btn.dataset.msgIdx, 10);
+      const text = msgTexts[idx];
+      if (text == null) return;
+
+      if (btn.dataset.action === 'copy') {
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = 'Copied';
+          btn.classList.add('confirmed');
+          if (window.toast) toast('Copied to clipboard', 'success');
+          setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('confirmed'); }, 2000);
+        });
+      } else if (btn.dataset.action === 'save') {
+        btn.disabled = true;
+        fetch('/api/content/drafts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        }).then(r => {
+          if (!r.ok) throw new Error('Save failed');
+          btn.textContent = 'Saved';
+          btn.classList.add('confirmed');
+          if (window.toast) toast('Saved to Draft Bank', 'success');
+          setTimeout(() => { btn.textContent = 'Save to Drafts'; btn.classList.remove('confirmed'); btn.disabled = false; }, 2000);
+        }).catch(() => {
+          btn.textContent = 'Failed';
+          if (window.toast) toast('Failed to save draft', 'error');
+          setTimeout(() => { btn.textContent = 'Save to Drafts'; btn.disabled = false; }, 2000);
+        });
+      }
+    });
 
     function showTyping() {
       const el = document.getElementById('messages');
@@ -228,30 +289,103 @@
 
       showTyping();
 
-      try {
-        const body = { messages: chatHistory };
-        if (panelContext) {
-          body.context_type = panelContext.type;
-          body.context_data = panelContext.data;
-          // Only use panel context for the first message
-          panelContext = null;
-        }
+      const body = { messages: chatHistory };
+      if (panelContext) {
+        body.context_type = panelContext.type;
+        body.context_data = panelContext.data;
+        panelContext = null;
+      }
 
-        const r = await fetch('/api/chat', {
+      try {
+        // Try streaming endpoint first
+        const r = await fetch('/api/chat/stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        const data = await r.json();
-        hideTyping();
 
-        if (data.error) throw new Error(data.error);
+        if (!r.ok || !r.body) throw new Error('stream-unavailable');
 
-        addMessage('assistant', data.reply);
-        chatHistory.push({ role: 'assistant', content: data.reply });
-      } catch (err) {
-        hideTyping();
-        addMessage('assistant', 'Error: ' + err.message);
+        const reader = r.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = '';
+        let msgDiv = null;
+        let bubble = null;
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6).trim();
+            if (!payload) continue;
+
+            let parsed;
+            try { parsed = JSON.parse(payload); } catch { continue; }
+
+            if (parsed.done) {
+              // Stream complete: use the full reply for history
+              const fullReply = parsed.reply || accumulated;
+              chatHistory.push({ role: 'assistant', content: fullReply });
+              // Re-render final content and add action buttons
+              if (bubble) {
+                bubble.innerHTML = formatMarkdown(fullReply);
+                const actions = document.createElement('div');
+                actions.innerHTML = buildActionButtons(fullReply);
+                msgDiv.appendChild(actions.firstElementChild);
+              }
+              break;
+            }
+
+            if (parsed.token) {
+              if (!msgDiv) {
+                // First token: hide typing, create message bubble
+                hideTyping();
+                msgDiv = addMessage('assistant', '');
+                bubble = msgDiv.querySelector('.msg-bubble');
+              }
+              accumulated += parsed.token;
+              bubble.innerHTML = formatMarkdown(accumulated);
+              document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+            }
+          }
+        }
+
+        // If no tokens arrived at all (empty stream), fall back
+        if (!msgDiv) {
+          throw new Error('stream-empty');
+        }
+
+      } catch (streamErr) {
+        // Fall back to non-streaming endpoint
+        if (streamErr.message === 'stream-unavailable' || streamErr.message === 'stream-empty') {
+          try {
+            const r2 = await fetch('/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            const data = await r2.json();
+            hideTyping();
+
+            if (data.error) throw new Error(data.error);
+
+            addMessage('assistant', data.reply);
+            chatHistory.push({ role: 'assistant', content: data.reply });
+          } catch (fallbackErr) {
+            hideTyping();
+            addMessage('assistant', 'Error: ' + fallbackErr.message);
+          }
+        } else {
+          hideTyping();
+          addMessage('assistant', 'Error: ' + streamErr.message);
+        }
       }
 
       document.getElementById('sendBtn').disabled = false;
@@ -268,7 +402,7 @@
       return esc(text)
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`(.+?)`/g, '<code style="background:var(--bg-3);padding:1px 4px;border-radius:3px;font-family:var(--font-mono);font-size:12px">$1</code>')
+        .replace(/`(.+?)`/g, '<code style="background:var(--bg-3);padding:1px 4px;border-radius:3px;font-family:var(--font-mono);font-size:13px">$1</code>')
         .replace(/\n/g, '<br>');
     }
 

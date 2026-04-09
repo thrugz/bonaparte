@@ -8,6 +8,7 @@ config({ path: resolve(__dirname, "..", "config", ".env") });
 // Dashboard needs direct API access
 export const SLACK_USER_TOKEN = process.env.SLACK_USER_TOKEN;
 export const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
+export const SLACK_APP_TOKEN = process.env.SLACK_APP_TOKEN;
 export const HUBSPOT_TOKEN = process.env.HUBSPOT_TOKEN;
 
 // Custom API clients

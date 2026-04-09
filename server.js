@@ -14,7 +14,8 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { requireAuth, loginHandler, logoutHandler, meHandler } from "./middleware/auth.js";
 import { getRecentRuns, getLastRun, getMemoryNodes, setMemoryNodes } from "./lib/db.js";
 import { SLACK_BOT_TOKEN, HUBSPOT_TOKEN } from "./tools/config.js";
-import { startScheduler, getScheduledJobs, runJobManually } from "./jobs/scheduler.js";
+import { startScheduler, getScheduledJobs, runJobManually, updateJob, deleteJob, createJob } from "./jobs/scheduler.js";
+import { startSlackBot } from "./lib/slack-bot.js";
 import { getSetting, setSetting } from "./lib/db.js";
 import { search } from "./tools/research.js";
 import { evaluateFeatures, evaluateCompetitor, chat, chatStream } from "./lib/claude.js";
@@ -322,6 +323,35 @@ app.post("/api/jobs/:name/run", requireAuth, async (req, res) => {
   try {
     const result = await runJobManually(req.params.name);
     res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put("/api/jobs/:name", requireAuth, (req, res) => {
+  try {
+    const updated = updateJob(req.params.name, req.body);
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete("/api/jobs/:name", requireAuth, (req, res) => {
+  try {
+    deleteJob(req.params.name);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post("/api/jobs", requireAuth, (req, res) => {
+  try {
+    const { name, cron, description, enabled } = req.body;
+    if (!name || !cron) return res.status(400).json({ error: "name and cron required" });
+    const job = createJob(name, { cron, description, enabled });
+    res.json(job);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -1408,4 +1438,5 @@ app.listen(PORT, () => {
   console.log(`\n  Bonaparte`);
   console.log(`  http://localhost:${PORT}\n`);
   startScheduler();
+  startSlackBot().catch(err => console.error("  Slack bot failed:", err.message));
 });

@@ -42,6 +42,26 @@
     .job-table th { text-align: left; font-size: 13px; color: var(--text-3); padding: 8px 12px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
     .job-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
     .job-table .mono { font-family: var(--font-mono); font-size: 13px; }
+    .job-table tr.disabled td { opacity: 0.4; }
+    .job-table tr.disabled td:last-child { opacity: 1; }
+
+    .toggle { position: relative; display: inline-block; width: 36px; height: 20px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider { position: absolute; inset: 0; background: var(--bg-3); border-radius: 10px; transition: 0.2s; }
+    .toggle .slider:before { content: ""; position: absolute; width: 16px; height: 16px; left: 2px; bottom: 2px; background: var(--text-3); border-radius: 50%; transition: 0.2s; }
+    .toggle input:checked + .slider { background: var(--accent); }
+    .toggle input:checked + .slider:before { transform: translateX(16px); background: var(--bg); }
+
+    .job-actions { display: flex; gap: 6px; align-items: center; }
+    .btn-icon { padding: 4px 8px; font-size: 13px; background: none; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-2); }
+    .btn-icon:hover { background: var(--bg-3); color: var(--text); }
+    .btn-icon.danger:hover { background: var(--red); color: var(--bg); border-color: var(--red); }
+
+    .inline-edit { background: var(--bg-2); border: 1px solid var(--border-hi); border-radius: 4px; color: var(--text); font-family: var(--font-mono); font-size: 13px; padding: 4px 8px; width: 100%; }
+    .inline-edit:focus { outline: none; border-color: var(--accent); }
+
+    .add-job-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+    .add-job-row input { flex: 1; }
 
     .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
     .log-table th { text-align: left; font-size: 12px; color: var(--text-3); padding: 6px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
@@ -74,9 +94,15 @@
 
     <h2>Scheduled Jobs</h2>
     <table class="job-table" id="jobs">
-      <thead><tr><th>Job</th><th>Schedule</th><th>Last Run</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>On</th><th>Job</th><th>Schedule</th><th>Last Run</th><th>Status</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
+    <div class="add-job-row">
+      <input type="text" class="inline-edit" id="new-job-name" placeholder="job-name">
+      <input type="text" class="inline-edit" id="new-job-cron" placeholder="*/5 * * * *" style="max-width:160px">
+      <input type="text" class="inline-edit" id="new-job-desc" placeholder="Description">
+      <button onclick="addJob()">Add</button>
+    </div>
 
     <h2>Job History</h2>
     <table class="log-table" id="log">
@@ -130,7 +156,6 @@
       const r = await fetch('/api/jobs');
       const { runs, scheduled } = await r.json();
 
-      // Scheduled jobs table
       const tbody = document.querySelector('#jobs tbody');
       tbody.innerHTML = '';
       for (const job of scheduled) {
@@ -138,17 +163,32 @@
         const lastTime = job.lastRun?.started_at ? new Date(job.lastRun.started_at).toLocaleString() : 'Never';
         const statusClass = lastStatus === 'ok' ? 'ok' : lastStatus === 'error' ? 'error' : '';
         const tr = document.createElement('tr');
+        if (!job.enabled) tr.className = 'disabled';
         tr.innerHTML = `
+          <td>
+            <label class="toggle">
+              <input type="checkbox" ${job.enabled ? 'checked' : ''} onchange="toggleJob('${job.name}', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </td>
           <td>${job.description}</td>
-          <td class="mono">${job.cron}</td>
+          <td class="mono">
+            <input class="inline-edit" value="${job.cron}" style="width:140px"
+              onblur="editCron('${job.name}', this.value)"
+              onkeydown="if(event.key==='Enter'){this.blur()}">
+          </td>
           <td class="mono">${lastTime}</td>
           <td class="${statusClass}">${lastStatus}</td>
-          <td><button onclick="runJob('${job.name}')" id="btn-${job.name}">Run Now</button></td>
+          <td>
+            <div class="job-actions">
+              <button onclick="runJob('${job.name}')" id="btn-${job.name}" ${!job.implemented ? 'disabled title="No implementation"' : ''}>Run</button>
+              <button class="btn-icon danger" onclick="removeJob('${job.name}')" title="Delete">✕</button>
+            </div>
+          </td>
         `;
         tbody.appendChild(tr);
       }
 
-      // Job history log
       const logBody = document.querySelector('#log tbody');
       logBody.innerHTML = '';
       for (const run of runs.slice(0, 20)) {
@@ -167,16 +207,67 @@
       }
     }
 
+    async function toggleJob(name, enabled) {
+      const r = await fetch('/api/jobs/' + name, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await r.json();
+      if (data.error) toast(data.error, 'error');
+      else toast(name + (enabled ? ' enabled' : ' disabled'));
+      await loadJobs();
+    }
+
+    async function editCron(name, cron) {
+      const r = await fetch('/api/jobs/' + name, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cron }),
+      });
+      const data = await r.json();
+      if (data.error) { toast(data.error, 'error'); await loadJobs(); }
+      else toast(name + ' schedule updated');
+    }
+
+    async function removeJob(name) {
+      if (!confirm('Delete job "' + name + '"? This cannot be undone.')) return;
+      const r = await fetch('/api/jobs/' + name, { method: 'DELETE' });
+      const data = await r.json();
+      if (data.error) toast(data.error, 'error');
+      else toast(name + ' deleted');
+      await loadJobs();
+    }
+
+    async function addJob() {
+      const name = document.getElementById('new-job-name').value.trim();
+      const cron = document.getElementById('new-job-cron').value.trim();
+      const description = document.getElementById('new-job-desc').value.trim();
+      if (!name || !cron) { toast('Name and cron are required', 'error'); return; }
+      const r = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, cron, description: description || name, enabled: true }),
+      });
+      const data = await r.json();
+      if (data.error) toast(data.error, 'error');
+      else {
+        toast(name + ' created');
+        document.getElementById('new-job-name').value = '';
+        document.getElementById('new-job-cron').value = '';
+        document.getElementById('new-job-desc').value = '';
+      }
+      await loadJobs();
+    }
+
     async function runJob(name) {
       const btn = document.getElementById('btn-' + name);
       btn.disabled = true;
-      btn.textContent = 'Running...';
+      btn.textContent = '...';
       try {
         await fetch('/api/jobs/' + name + '/run', { method: 'POST' });
       } catch (e) {}
       await loadJobs();
-      btn.disabled = false;
-      btn.textContent = 'Run Now';
     }
 
     async function init() {

@@ -314,7 +314,11 @@ Background jobs run as Claude Code remote triggers on Anthropic's infrastructure
 | Morning Brief | 07:30 Mon-Fri | trig_01PEXD3FyCvCgXJp6dZc6yEp |
 | Portfolio Health Alerts | 08:00 Monday | trig_01MW9WZcNniRcDbcr2NwNuqg |
 
-All use Slack + HubSpot MCP connectors. Portfolio Health Alerts also uses the Bonaparte bot token for DMs. Manage at: https://claude.ai/code/scheduled
+Portfolio Health Alerts uses the HubSpot MCP connector for CRM reads and the Bonaparte bot token (via curl) for all Slack ops — canvas and DM. The Slack MCP connector is not attached to that trigger, so messages can't accidentally post as Bram. Morning Brief and Nightly Consolidation still use both MCPs (canvas writes only).
+
+Manage triggers from Bonaparte's Settings page (the toggle and cron editors go through the Anthropic triggers API at api.anthropic.com/v1/code/triggers, authenticated via the OAuth token in ~/.claude/.credentials.json). Same source of truth as claude.ai/code/scheduled. There is no local cron — if the Bonaparte server is down, remote triggers still fire.
+
+"Run now" in the UI executes the local JS implementation in jobs/*.js, not the remote prompt — useful for testing but be aware the two paths can diverge.
 
 ### Portfolio Health Alerts
 

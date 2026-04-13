@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { requireAuth, loginHandler, logoutHandler, meHandler } from "./middleware/auth.js";
 import { getRecentRuns, getLastRun, getMemoryNodes, setMemoryNodes } from "./lib/db.js";
 import { SLACK_BOT_TOKEN, HUBSPOT_TOKEN } from "./tools/config.js";
-import { startScheduler, getScheduledJobs, runJobManually, updateJob, deleteJob, createJob } from "./jobs/scheduler.js";
+import { startScheduler, getScheduledJobs, runJobManually, updateJob } from "./jobs/scheduler.js";
 import { startSlackBot } from "./lib/slack-bot.js";
 import { getSetting, setSetting } from "./lib/db.js";
 import { search } from "./tools/research.js";
@@ -313,10 +313,14 @@ app.get("/api/champions", requireAuth, async (req, res) => {
 
 // ── Job routes ──
 
-app.get("/api/jobs", requireAuth, (req, res) => {
-  const runs = getRecentRuns(50);
-  const scheduled = getScheduledJobs();
-  res.json({ runs, scheduled });
+app.get("/api/jobs", requireAuth, async (req, res) => {
+  try {
+    const runs = getRecentRuns(50);
+    const scheduled = await getScheduledJobs();
+    res.json({ runs, scheduled });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/api/jobs/:name/run", requireAuth, async (req, res) => {
@@ -328,30 +332,10 @@ app.post("/api/jobs/:name/run", requireAuth, async (req, res) => {
   }
 });
 
-app.put("/api/jobs/:name", requireAuth, (req, res) => {
+app.put("/api/jobs/:name", requireAuth, async (req, res) => {
   try {
-    const updated = updateJob(req.params.name, req.body);
+    const updated = await updateJob(req.params.name, req.body);
     res.json(updated);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.delete("/api/jobs/:name", requireAuth, (req, res) => {
-  try {
-    deleteJob(req.params.name);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.post("/api/jobs", requireAuth, (req, res) => {
-  try {
-    const { name, cron, description, enabled } = req.body;
-    if (!name || !cron) return res.status(400).json({ error: "name and cron required" });
-    const job = createJob(name, { cron, description, enabled });
-    res.json(job);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

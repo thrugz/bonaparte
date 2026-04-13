@@ -93,16 +93,11 @@
     <div class="token-grid" id="tokens"></div>
 
     <h2>Scheduled Jobs</h2>
+    <p class="muted" style="margin:-0.5rem 0 0.5rem; font-size:0.85rem">Backed by Anthropic remote triggers. Toggle and schedule changes sync to claude.ai/code/scheduled.</p>
     <table class="job-table" id="jobs">
       <thead><tr><th>On</th><th>Job</th><th>Schedule</th><th>Last Run</th><th>Status</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
-    <div class="add-job-row">
-      <input type="text" class="inline-edit" id="new-job-name" placeholder="job-name">
-      <input type="text" class="inline-edit" id="new-job-cron" placeholder="*/5 * * * *" style="max-width:160px">
-      <input type="text" class="inline-edit" id="new-job-desc" placeholder="Description">
-      <button onclick="addJob()">Add</button>
-    </div>
 
     <h2>Job History</h2>
     <table class="log-table" id="log">
@@ -182,7 +177,6 @@
           <td>
             <div class="job-actions">
               <button onclick="runJob('${job.name}')" id="btn-${job.name}" ${!job.implemented ? 'disabled title="No implementation"' : ''}>Run</button>
-              <button class="btn-icon danger" onclick="removeJob('${job.name}')" title="Delete">✕</button>
             </div>
           </td>
         `;
@@ -228,36 +222,6 @@
       const data = await r.json();
       if (data.error) { toast(data.error, 'error'); await loadJobs(); }
       else toast(name + ' schedule updated');
-    }
-
-    async function removeJob(name) {
-      if (!confirm('Delete job "' + name + '"? This cannot be undone.')) return;
-      const r = await fetch('/api/jobs/' + name, { method: 'DELETE' });
-      const data = await r.json();
-      if (data.error) toast(data.error, 'error');
-      else toast(name + ' deleted');
-      await loadJobs();
-    }
-
-    async function addJob() {
-      const name = document.getElementById('new-job-name').value.trim();
-      const cron = document.getElementById('new-job-cron').value.trim();
-      const description = document.getElementById('new-job-desc').value.trim();
-      if (!name || !cron) { toast('Name and cron are required', 'error'); return; }
-      const r = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, cron, description: description || name, enabled: true }),
-      });
-      const data = await r.json();
-      if (data.error) toast(data.error, 'error');
-      else {
-        toast(name + ' created');
-        document.getElementById('new-job-name').value = '';
-        document.getElementById('new-job-cron').value = '';
-        document.getElementById('new-job-desc').value = '';
-      }
-      await loadJobs();
     }
 
     async function runJob(name) {

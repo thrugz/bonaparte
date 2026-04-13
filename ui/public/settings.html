@@ -45,23 +45,16 @@
     .job-table tr.disabled td { opacity: 0.4; }
     .job-table tr.disabled td:last-child { opacity: 1; }
 
-    .toggle { position: relative; display: inline-block; width: 36px; height: 20px; cursor: pointer; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle .slider { position: absolute; inset: 0; background: var(--bg-3); border-radius: 10px; transition: 0.2s; }
-    .toggle .slider:before { content: ""; position: absolute; width: 16px; height: 16px; left: 2px; bottom: 2px; background: var(--text-3); border-radius: 50%; transition: 0.2s; }
-    .toggle input:checked + .slider { background: var(--accent); }
-    .toggle input:checked + .slider:before { transform: translateX(16px); background: var(--bg); }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-family: var(--font-mono); color: var(--text-3); cursor: help; }
+    .status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); }
+    .status-pill.on .dot { background: var(--green); }
+    .status-pill.on { color: var(--green); }
+    .status-pill.off .dot { background: var(--text-3); }
+
+    .remote-hint { font-size: 12px; color: var(--text-3); }
+    .remote-hint a { color: var(--accent); }
 
     .job-actions { display: flex; gap: 6px; align-items: center; }
-    .btn-icon { padding: 4px 8px; font-size: 13px; background: none; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-2); }
-    .btn-icon:hover { background: var(--bg-3); color: var(--text); }
-    .btn-icon.danger:hover { background: var(--red); color: var(--bg); border-color: var(--red); }
-
-    .inline-edit { background: var(--bg-2); border: 1px solid var(--border-hi); border-radius: 4px; color: var(--text); font-family: var(--font-mono); font-size: 13px; padding: 4px 8px; width: 100%; }
-    .inline-edit:focus { outline: none; border-color: var(--accent); }
-
-    .add-job-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
-    .add-job-row input { flex: 1; }
 
     .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
     .log-table th { text-align: left; font-size: 12px; color: var(--text-3); padding: 6px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
@@ -93,9 +86,14 @@
     <div class="token-grid" id="tokens"></div>
 
     <h2>Scheduled Jobs</h2>
-    <p class="muted" style="margin:-0.5rem 0 0.5rem; font-size:0.85rem">Backed by Anthropic remote triggers. Toggle and schedule changes sync to claude.ai/code/scheduled.</p>
+    <p class="remote-hint" style="margin:-0.5rem 0 0.5rem">
+      Scheduling and toggles are managed as Anthropic remote triggers.
+      Change schedule or on/off at
+      <a href="https://claude.ai/code/scheduled" target="_blank" rel="noopener">claude.ai/code/scheduled ↗</a>.
+      "Run now" below executes the local implementation for testing.
+    </p>
     <table class="job-table" id="jobs">
-      <thead><tr><th>On</th><th>Job</th><th>Schedule</th><th>Last Run</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>State</th><th>Job</th><th>Schedule</th><th>Last Run</th><th>Status</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
 
@@ -159,19 +157,19 @@
         const statusClass = lastStatus === 'ok' ? 'ok' : lastStatus === 'error' ? 'error' : '';
         const tr = document.createElement('tr');
         if (!job.enabled) tr.className = 'disabled';
+        const pillClass = job.enabled === true ? 'on' : job.enabled === false ? 'off' : 'off';
+        const pillText = job.enabled === true ? 'On' : job.enabled === false ? 'Off' : '?';
+        const manageTip = job.enabled === null
+          ? 'State unavailable. Check claude.ai/code/scheduled'
+          : 'Toggle at claude.ai/code/scheduled';
         tr.innerHTML = `
           <td>
-            <label class="toggle">
-              <input type="checkbox" ${job.enabled ? 'checked' : ''} onchange="toggleJob('${job.name}', this.checked)">
-              <span class="slider"></span>
-            </label>
+            <a class="status-pill ${pillClass}" href="https://claude.ai/code/scheduled" target="_blank" rel="noopener" title="${manageTip}" style="text-decoration:none">
+              <span class="dot"></span>${pillText}
+            </a>
           </td>
           <td>${job.description}</td>
-          <td class="mono">
-            <input class="inline-edit" value="${job.cron}" style="width:140px"
-              onblur="editCron('${job.name}', this.value)"
-              onkeydown="if(event.key==='Enter'){this.blur()}">
-          </td>
+          <td class="mono" title="Schedule managed at claude.ai/code/scheduled">${job.cron}</td>
           <td class="mono">${lastTime}</td>
           <td class="${statusClass}">${lastStatus}</td>
           <td>
@@ -199,29 +197,6 @@
         `;
         logBody.appendChild(tr);
       }
-    }
-
-    async function toggleJob(name, enabled) {
-      const r = await fetch('/api/jobs/' + name, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled }),
-      });
-      const data = await r.json();
-      if (data.error) toast(data.error, 'error');
-      else toast(name + (enabled ? ' enabled' : ' disabled'));
-      await loadJobs();
-    }
-
-    async function editCron(name, cron) {
-      const r = await fetch('/api/jobs/' + name, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cron }),
-      });
-      const data = await r.json();
-      if (data.error) { toast(data.error, 'error'); await loadJobs(); }
-      else toast(name + ' schedule updated');
     }
 
     async function runJob(name) {

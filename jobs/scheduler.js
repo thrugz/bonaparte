@@ -9,7 +9,7 @@
  * There is intentionally no local cron. If Bonaparte's server is down,
  * remote triggers still fire on Anthropic's infra.
  */
-import { listTriggers, updateTrigger, runTrigger } from "../lib/claude-triggers.js";
+import { listTriggers } from "../lib/claude-triggers.js";
 import { logJobStart, logJobEnd, getLastRun } from "../lib/db.js";
 import runConsolidation from "./consolidation.js";
 import runMorningBrief from "./morning-brief.js";
@@ -47,24 +47,30 @@ export function startScheduler() {
 }
 
 export async function getScheduledJobs() {
-  const triggers = await listTriggers();
-  const result = [];
-  for (const t of triggers) {
-    const name = jobNameByTrigger(t.id);
-    if (!name) continue;
-    const job = JOBS[name];
-    result.push({
+  let triggersById = {};
+  try {
+    const triggers = await listTriggers();
+    for (const t of triggers) triggersById[t.id] = t;
+  } catch (err) {
+    // Remote read unavailable (no OAuth, expired, network, etc.).
+    // Return a best-effort snapshot so the UI still renders and the
+    // claude.ai link still works.
+    console.warn(`  [scheduler] listTriggers failed: ${err.message}`);
+  }
+
+  const result = Object.entries(JOBS).map(([name, job]) => {
+    const t = triggersById[job.triggerId];
+    return {
       name,
-      triggerId: t.id,
-      cron: t.cron_expression,
+      triggerId: job.triggerId,
+      cron: t?.cron_expression || "—",
       description: job.description,
-      enabled: !!t.enabled,
-      nextRunAt: t.next_run_at,
+      enabled: t ? !!t.enabled : null,
+      nextRunAt: t?.next_run_at || null,
       implemented: true,
       lastRun: getLastRun(name),
-    });
-  }
-  // Stable order so the UI doesn't jump around.
+    };
+  });
   result.sort((a, b) => a.name.localeCompare(b.name));
   return result;
 }
@@ -86,38 +92,3 @@ export async function runJobManually(name) {
   }
 }
 
-export async function updateJob(name, updates) {
-  const job = JOBS[name];
-  if (!job) throw new Error(`Unknown job: ${name}`);
-
-  const body = {};
-  if (updates.cron !== undefined) body.cron_expression = updates.cron;
-  if (updates.enabled !== undefined) body.enabled = !!updates.enabled;
-
-  if (Object.keys(body).length === 0) return null;
-
-  const trigger = await updateTrigger(job.triggerId, body);
-  return {
-    name,
-    triggerId: trigger.id,
-    cron: trigger.cron_expression,
-    enabled: trigger.enabled,
-    description: job.description,
-  };
-}
-
-export async function runRemote(name) {
-  const job = JOBS[name];
-  if (!job) throw new Error(`Unknown job: ${name}`);
-  return runTrigger(job.triggerId);
-}
-
-// Create and delete intentionally unsupported — the three remote triggers
-// are structural. The UI no longer exposes these paths.
-export function createJob() {
-  throw new Error("Custom jobs are not supported. Manage triggers at claude.ai/code/scheduled.");
-}
-
-export function deleteJob() {
-  throw new Error("Deleting remote triggers from the UI is not supported.");
-}

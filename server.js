@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { requireAuth, loginHandler, logoutHandler, meHandler } from "./middleware/auth.js";
 import { getRecentRuns, getLastRun, getMemoryNodes, setMemoryNodes } from "./lib/db.js";
 import { SLACK_BOT_TOKEN, HUBSPOT_TOKEN } from "./tools/config.js";
-import { startScheduler, getScheduledJobs, runJobManually, updateJob } from "./jobs/scheduler.js";
+import { startScheduler, getScheduledJobs, runJobManually } from "./jobs/scheduler.js";
 import { startSlackBot } from "./lib/slack-bot.js";
 import { getSetting, setSetting } from "./lib/db.js";
 import { search } from "./tools/research.js";
@@ -332,14 +332,6 @@ app.post("/api/jobs/:name/run", requireAuth, async (req, res) => {
   }
 });
 
-app.put("/api/jobs/:name", requireAuth, async (req, res) => {
-  try {
-    const updated = await updateJob(req.params.name, req.body);
-    res.json(updated);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
 
 // ── Settings routes ──
 

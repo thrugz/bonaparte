@@ -4,7 +4,8 @@
   "description": "Strategic AI tooling for Vitus",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "node scripts/build.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

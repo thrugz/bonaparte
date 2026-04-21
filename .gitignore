@@ -3,3 +3,5 @@ config/.env
 config/bonaparte.json
 .env
 Context/
+dist/
+release/

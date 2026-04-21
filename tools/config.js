@@ -1,9 +1,8 @@
 import { config } from "dotenv";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { userPath, ensureUserDir } from "../lib/paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: resolve(__dirname, "..", "config", ".env") });
+ensureUserDir();
+config({ path: userPath(".env") });
 
 // Dashboard needs direct API access
 export const SLACK_USER_TOKEN = process.env.SLACK_USER_TOKEN;

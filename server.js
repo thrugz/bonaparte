@@ -7,9 +7,10 @@
  */
 import express from "express";
 import session from "express-session";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
 import { readFileSync, writeFileSync, existsSync } from "fs";
+import { assetPath, userPath, ensureUserDir } from "./lib/paths.js";
+
+ensureUserDir();
 
 import { requireAuth, loginHandler, logoutHandler, meHandler } from "./middleware/auth.js";
 import { getRecentRuns, getLastRun, getMemoryNodes, setMemoryNodes } from "./lib/db.js";
@@ -20,7 +21,6 @@ import { getSetting, setSetting } from "./lib/db.js";
 import { search } from "./tools/research.js";
 import { evaluateFeatures, evaluateCompetitor, chat, chatStream } from "./lib/claude.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 
 // ── One-time memory seed (migrate from Slack canvas to db) ──
@@ -68,7 +68,7 @@ app.use(session({
 // ── Auth routes ──
 
 app.get("/login", (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/login.html"));
+  res.sendFile(assetPath("ui", "public", "login.html"));
 });
 app.post("/login", loginHandler);
 app.get("/logout", logoutHandler);
@@ -77,33 +77,33 @@ app.get("/api/me", meHandler);
 // ── Static files (after login check for main pages) ──
 
 app.get("/", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/index.html"));
+  res.sendFile(assetPath("ui", "public", "index.html"));
 });
 app.get("/settings", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/settings.html"));
+  res.sendFile(assetPath("ui", "public", "settings.html"));
 });
 app.get("/timeline", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/timeline.html"));
+  res.sendFile(assetPath("ui", "public", "timeline.html"));
 });
 app.get("/competitors", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/competitors.html"));
+  res.sendFile(assetPath("ui", "public", "competitors.html"));
 });
 app.get("/features", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/features.html"));
+  res.sendFile(assetPath("ui", "public", "features.html"));
 });
 app.get("/vchat", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/vchat.html"));
+  res.sendFile(assetPath("ui", "public", "vchat.html"));
 });
 app.get("/content", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/content.html"));
+  res.sendFile(assetPath("ui", "public", "content.html"));
 });
 app.get("/timeline", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/timeline.html"));
+  res.sendFile(assetPath("ui", "public", "timeline.html"));
 });
 app.get("/account", requireAuth, (req, res) => {
-  res.sendFile(resolve(__dirname, "ui/public/account.html"));
+  res.sendFile(assetPath("ui", "public", "account.html"));
 });
-app.use(express.static(resolve(__dirname, "ui/public")));
+app.use(express.static(assetPath("ui", "public")));
 
 // ── HubSpot helpers ──
 
@@ -349,7 +349,7 @@ app.get("/api/settings/tokens", requireAuth, (req, res) => {
 app.post("/api/settings/tokens", requireAuth, (req, res) => {
   try {
     const updates = req.body; // { KEY: "value", ... }
-    const envPath = resolve(__dirname, "config", ".env");
+    const envPath = userPath(".env");
     let content = readFileSync(envPath, "utf-8");
 
     for (const [key, value] of Object.entries(updates)) {
@@ -499,7 +499,7 @@ app.get("/api/competitors/:name/intel", requireAuth, async (req, res) => {
 
 // Competitor vs Market Demand matrix
 app.get("/api/competitors/demand-matrix", requireAuth, async (req, res) => {
-  const insightsPath = resolve(__dirname, "data", "survey-insights.json");
+  const insightsPath = assetPath("data", "survey-insights.json");
   if (!existsSync(insightsPath)) return res.status(404).json({ error: "No survey data" });
 
   const survey = JSON.parse(readFileSync(insightsPath, "utf-8"));
@@ -671,7 +671,7 @@ app.post("/api/content/generate", requireAuth, async (req, res) => {
     if (facts.length) contextParts.push("KEY FACTS:\n" + facts.map(f => f.description).join("\n"));
 
     // Market demand from survey (top 8 only to save tokens)
-    const insightsPath = resolve(__dirname, "data", "survey-insights.json");
+    const insightsPath = assetPath("data", "survey-insights.json");
     if (existsSync(insightsPath)) {
       try {
         const survey = JSON.parse(readFileSync(insightsPath, "utf-8"));
@@ -764,7 +764,7 @@ Facts (${facts.length}): ${facts.map(f => f.description).join("; ")}
 Patterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
 
     // Load market demand (sync file read, instant)
-    const insightsPath = resolve(__dirname, "data", "survey-insights.json");
+    const insightsPath = assetPath("data", "survey-insights.json");
     if (existsSync(insightsPath)) {
       try {
         const survey = JSON.parse(readFileSync(insightsPath, "utf-8"));
@@ -871,7 +871,7 @@ Patterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
 // ── Market Demand routes (Onsight survey insights) ──
 
 app.get("/api/market-demand", requireAuth, (req, res) => {
-  const insightsPath = resolve(__dirname, "data", "survey-insights.json");
+  const insightsPath = assetPath("data", "survey-insights.json");
   if (!existsSync(insightsPath)) {
     return res.status(404).json({ error: "Survey insights data not found" });
   }
@@ -1024,7 +1024,7 @@ app.post("/api/chat/stream", requireAuth, async (req, res) => {
     const patterns = nodes.filter(n => n.type === "PATTERN" && n.status === "active");
     contextParts.push(`MEMORY NODES:\nSignals (${activeSignals.length}): ${activeSignals.map(s => `[${s.score}] ${s.description}`).join("; ")}\nFacts (${facts.length}): ${facts.map(f => f.description).join("; ")}\nPatterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
 
-    const insightsPath = resolve(__dirname, "data", "survey-insights.json");
+    const insightsPath = assetPath("data", "survey-insights.json");
     if (existsSync(insightsPath)) {
       try {
         const survey = JSON.parse(readFileSync(insightsPath, "utf-8"));
@@ -1398,7 +1398,7 @@ app.get("/api/events", requireAuth, async (req, res) => {
 app.post("/api/content/drafts", requireAuth, (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: "text required" });
-  const draftsPath = resolve(__dirname, "data", "drafts.json");
+  const draftsPath = userPath("drafts.json");
   let drafts = [];
   if (existsSync(draftsPath)) {
     try { drafts = JSON.parse(readFileSync(draftsPath, "utf-8")); } catch {}

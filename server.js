@@ -23,34 +23,25 @@ import { evaluateFeatures, evaluateCompetitor, chat, chatStream } from "./lib/cl
 
 const PORT = process.env.PORT || 3000;
 
-// ── One-time memory seed (migrate from Slack canvas to db) ──
+// ── One-time memory seed ──
+// Only durable data seeds: strategic angles (CONTEXT), stable structural
+// facts (consortia, tunnel project), durable patterns, and historical
+// decisions. Account counts, deal snapshots, and dated signals are
+// intentionally NOT seeded — Bonaparte pulls those live from HubSpot at
+// brief time.
 if (getMemoryNodes().length === 0) {
   const seed = [
-    { type:"SIGNAL", score:2, description:"COWI: four new users added Mar 11, no deal opened. Deadline 2026-03-28 passed unactioned. Decayed from SIGNAL-3 on 7 Apr. Owner: Josephine.", tags:["COWI","expansion","action-required"], deadline:"2026-03-28", status:"active" },
-    { type:"SIGNAL", score:2, description:"Ramboll has two live platform users (alsk@ and csdp@ at ramboll.dk). Identity unknown. No deal recorded. Must identify before outreach.", tags:["Ramboll","platform-access","action-required"], deadline:null, status:"active" },
-    { type:"SIGNAL", score:2, description:"FLC: 295 contacts, 55% Tier 1, avg score 5.9. Real employer unknown for most. Enrichment via LinkedHelper real_company needed, target Q2 2026.", tags:["FLC","enrichment","Femern"], deadline:null, status:"active" },
-    { type:"SIGNAL", score:2, description:"Pipeline hygiene: 14 of 23 open deals (61%) are past close date. Oldest overdue: PCL (66 days), NNE (59 days), Yrgo (46 days), AFRY Enterprise (39 days). Affects Bram, Josephine, and Casper. Needs bulk review.", tags:["pipeline","hygiene","action-required"], deadline:"2026-04-14", status:"active" },
-    { type:"SIGNAL", score:2, description:"FLC contacts batch activity: 307 contacts modified since Mar 25, mostly FLC/flc-jv.com updated today Apr 7. Verify whether this is platform activity or a sync/enrichment run.", tags:["FLC","activity","watch"], deadline:null, status:"active" },
-    { type:"SIGNAL", score:1, description:"DEME: 6 contacts, avg score 4.8, 50% Tier 1. Lowest engagement. May reflect use case gap or onboarding issue.", tags:["DEME","engagement","watch"], deadline:null, status:"active" },
-    { type:"FACT", score:2, description:"COWI has 154 HubSpot contacts, avg score 6.9, 70% Tier 1. Largest contact base. No open deal recorded. Account owned by Josephine.", tags:["COWI","engagement","pipeline-gap"], deadline:null, status:"active" },
-    { type:"FACT", score:1, description:"COWI sent unprompted positive note about Vitus dev team responsiveness on Femern project.", tags:["COWI","relationship","Femern"], deadline:null, status:"active" },
-    { type:"CONTEXT", score:2, description:"COWI strategic angle: project-based adoption on Femern. Expansion play is project to enterprise. memg@cowi.com is likely champion, survey respondent, scores non-BIM communication 4/10.", tags:["COWI","strategy","champion"], deadline:null, status:"active" },
+    { type:"CONTEXT", score:2, description:"COWI strategic angle: project-based adoption on Femern. Expansion play is project to enterprise. memg@cowi.com is a likely champion, survey respondent, scores non-BIM communication 4/10.", tags:["COWI","strategy","champion"], deadline:null, status:"active" },
     { type:"CONTEXT", score:2, description:"Ramboll strategic angle: multi-CDE environments, large infrastructure, ISO 19650 compliance. Consultancy in both appointing and appointed party roles. Multi-stakeholder sale.", tags:["Ramboll","strategy","ICP"], deadline:null, status:"active" },
-    { type:"FACT", score:2, description:"Fehmarnbelt tunnel: 18km immersed tunnel, construction since 2020. Completion slipped to approx 2031. FLC consortium: VINCI, Aarsleff, Max Bogl, BAM, Wayss and Freytag, CFE, Soletanche-Bachy, DEME. COWI is consultant.", tags:["Femern","FLC","timeline","COWI"], deadline:null, status:"active" },
-    { type:"FACT", score:1, description:"Ramboll last HubSpot note Mar 9. Trigger unknown.", tags:["Ramboll","HubSpot"], deadline:null, status:"active" },
-    { type:"FACT", score:2, description:"Adoption baseline 23 March 2026: 515 contacts, avg score 6.1, 58% Tier 1 (298), 29% Tier 2 (151), 10% Tier 3 (51), 2% inactive (12).", tags:["platform","adoption","baseline"], deadline:null, status:"active" },
-    { type:"FACT", score:1, description:"Top scoring accounts: Max Bogl 8.0 (2 users), Femern AS 7.3 (3), SBF 7.2 (4), CN3 7.0 (35), COWI 6.9 (99).", tags:["platform","adoption","top-accounts"], deadline:null, status:"active" },
-    { type:"FACT", score:2, description:"Open pipeline: 23 deals, 14 overdue. Bram: 3 overdue (Voult, EK EDU, EK Erhvervsakademi). Casper: 3 overdue (AFRY, HSD, Gjorgensen). Josephine: 8 overdue. Total pipeline includes deals closing Apr-Jul.", tags:["pipeline","deals","snapshot-7Apr"], deadline:null, status:"active" },
-    { type:"PATTERN", score:2, description:"Pipeline gap: multiple key accounts (COWI, Ramboll, CN3) show strong platform engagement but no recorded deals in HubSpot.", tags:["pipeline","engagement-gap"], deadline:null, status:"active" },
-    { type:"PATTERN", score:2, description:"Deal staleness: 61% of open deals are past close date. Not account-specific, this is a process/hygiene issue across owners.", tags:["pipeline","hygiene"], deadline:null, status:"active" },
+    { type:"FACT", score:2, description:"Fehmarnbelt tunnel: 18km immersed tunnel, construction since 2020. FLC consortium: VINCI, Aarsleff, Max Bogl, BAM, Wayss and Freytag, CFE, Soletanche-Bachy, DEME. COWI is consultant. Completion timeline subject to revision, verify annually.", tags:["Femern","FLC","COWI"], deadline:null, status:"active" },
+    { type:"PATTERN", score:2, description:"Pipeline gap: key accounts often show strong platform engagement without recorded deals in HubSpot. Always cross-check live HubSpot state before acting.", tags:["pipeline","engagement-gap"], deadline:null, status:"active" },
+    { type:"PATTERN", score:2, description:"Deal staleness is a recurring process issue across owners, not account-specific. Surface overdue deals via live HubSpot queries, not from memory.", tags:["pipeline","hygiene"], deadline:null, status:"active" },
     { type:"DECISION", score:0, description:"COWI account ownership assigned to Josephine, 7 April 2026. Bram's decision.", tags:["COWI","ownership","Josephine"], deadline:null, status:"active" },
     { type:"DECISION", score:0, description:"Bonaparte memory system redesigned 25 March 2026. Typed, tagged, scored nodes with relationship edges.", tags:["Bonaparte","system"], deadline:null, status:"active" },
-    { type:"DECISION", score:0, description:"Bonaparte Slack canvases created 25 March 2026.", tags:["Bonaparte","system"], deadline:null, status:"active" },
     { type:"DECISION", score:0, description:"Bonaparte architecture moved to MCP connectors plus remote triggers 26 March 2026. Local scripts removed. Background jobs on Anthropic infra.", tags:["Bonaparte","system","architecture"], deadline:null, status:"active" },
-    { type:"DECISION", score:0, description:"Memory store split from display canvas 26 March 2026. Pipe-delimited data store for reliable parsing, Memory Graph canvas for display only.", tags:["Bonaparte","system","memory"], deadline:null, status:"active" },
   ];
   setMemoryNodes(seed);
-  console.log("Seeded database with 22 memory nodes from Slack canvas migration");
+  console.log(`Seeded database with ${seed.length} durable memory nodes`);
 }
 
 const app = express();
@@ -335,7 +326,7 @@ app.post("/api/jobs/:name/run", requireAuth, async (req, res) => {
 
 // ── Settings routes ──
 
-const TOKEN_KEYS = ["SLACK_BOT_TOKEN", "SLACK_USER_TOKEN", "HUBSPOT_TOKEN", "VITUS_API_KEY", "TAVILY_API_KEY", "ANTHROPIC_API_KEY", "APP_PASSWORD"];
+const TOKEN_KEYS = ["SLACK_BOT_TOKEN", "SLACK_USER_TOKEN", "SLACK_APP_TOKEN", "HUBSPOT_TOKEN", "VITUS_API_KEY", "TAVILY_API_KEY", "ANTHROPIC_API_KEY"];
 
 app.get("/api/settings/tokens", requireAuth, (req, res) => {
   const tokens = {};
@@ -364,6 +355,38 @@ app.post("/api/settings/tokens", requireAuth, (req, res) => {
     }
     writeFileSync(envPath, content);
     res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const DEFAULT_ROLES = [
+  { name: "Bram Lyng Andersen", title: "Product, CS, AI tooling", hubspot_owner_id: "31176904", slack_user_id: "U0A0A097T1U" },
+  { name: "Josephine Kleiner", title: "Head of Sales", hubspot_owner_id: "30235134", slack_user_id: "" },
+  { name: "Casper Gullach", title: "CFO", hubspot_owner_id: "29290715", slack_user_id: "U06LQV2HF4M" },
+  { name: "Bertrand Carton", title: "Head of Marketing", hubspot_owner_id: "79783610", slack_user_id: "" },
+  { name: "Stine Kjærsgaard", title: "Team member", hubspot_owner_id: "49882854", slack_user_id: "" },
+];
+
+app.get("/api/settings/roles", requireAuth, (req, res) => {
+  const roles = getSetting("roles");
+  res.json(roles ?? DEFAULT_ROLES);
+});
+
+app.post("/api/settings/roles", requireAuth, (req, res) => {
+  try {
+    const roles = Array.isArray(req.body?.roles) ? req.body.roles : null;
+    if (!roles) return res.status(400).json({ error: "Expected { roles: [...] }" });
+    const clean = roles
+      .map((r) => ({
+        name: String(r.name || "").trim(),
+        title: String(r.title || "").trim(),
+        hubspot_owner_id: String(r.hubspot_owner_id || "").trim(),
+        slack_user_id: String(r.slack_user_id || "").trim(),
+      }))
+      .filter((r) => r.name);
+    setSetting("roles", clean);
+    res.json({ ok: true, roles: clean });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

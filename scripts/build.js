@@ -17,6 +17,7 @@ import { spawnSync } from "child_process";
 import { existsSync, mkdirSync, cpSync, copyFileSync, rmSync } from "fs";
 import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
+import os from "os";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, "..");
@@ -53,6 +54,18 @@ run("bun", bunArgs);
 cpSync(join(REPO, "ui"), join(OUT, "ui"), { recursive: true });
 cpSync(join(REPO, "data"), join(OUT, "data"), { recursive: true });
 copyFileSync(join(REPO, ".env.example"), join(OUT, ".env.example"));
+
+// Bake the current user's .env into the dist so recipients get a
+// working install on first launch. If absent, they fall back to
+// filling .env.example themselves.
+const appdata = process.env.APPDATA || join(os.homedir(), "AppData", "Roaming");
+const userEnv = join(appdata, "Bonaparte", ".env");
+if (existsSync(userEnv)) {
+  copyFileSync(userEnv, join(OUT, ".env"));
+  console.log(`  Bundled .env from ${userEnv} (contains live tokens — share privately)`);
+} else {
+  console.log(`  No .env at ${userEnv} — recipients will see an empty template.`);
+}
 
 console.log("\nDone.");
 console.log(`  Run: "${exePath}"`);

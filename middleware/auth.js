@@ -1,36 +1,28 @@
 /**
- * Simple password authentication middleware.
- * Uses APP_PASSWORD from env. Session-based.
+ * Auth middleware — no-op.
+ *
+ * Bonaparte runs on localhost only and doesn't expose itself to the network,
+ * so there's no login wall. Handlers are kept so server.js and the UI don't
+ * need to change; meHandler always reports authenticated, loginHandler just
+ * redirects home, logoutHandler clears any residual session and redirects home.
  */
 
-export function requireAuth(req, res, next) {
-  if (req.session?.authenticated) return next();
-  if (req.headers.accept?.includes("json")) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-  res.redirect("/login");
+export function requireAuth(_req, _res, next) {
+  next();
 }
 
-export function loginHandler(req, res) {
-  const { password } = req.body;
-  const expected = process.env.APP_PASSWORD;
-  if (!expected) {
-    return res.status(500).json({ error: "APP_PASSWORD not configured" });
-  }
-  if (password === expected) {
-    req.session.authenticated = true;
-    return res.redirect("/");
-  }
-  res.redirect("/login?error=1");
+export function loginHandler(_req, res) {
+  res.redirect("/");
 }
 
 export function logoutHandler(req, res) {
-  req.session.destroy(() => res.redirect("/login"));
+  if (req.session) {
+    req.session.destroy(() => res.redirect("/"));
+  } else {
+    res.redirect("/");
+  }
 }
 
-export function meHandler(req, res) {
-  if (req.session?.authenticated) {
-    return res.json({ authenticated: true });
-  }
-  res.status(401).json({ authenticated: false });
+export function meHandler(_req, res) {
+  res.json({ authenticated: true });
 }

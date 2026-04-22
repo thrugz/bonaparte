@@ -100,7 +100,7 @@ Bonaparte's memory uses a two-canvas system:
 
 ### Memory types
 
-- FACT: stable truths. Slow decay. E.g. Femern is a 2031 project, COWI has 154 contacts.
+- FACT: stable structural truths. Slow decay. E.g. "Fehmarnbelt tunnel FLC consortium: VINCI, Aarsleff, Max Bögl, ...". Do NOT put contact counts, deal states, or platform adoption numbers here — those are live HubSpot reads.
 - SIGNAL: time-sensitive observations needing action. Fast decay. Always has owner and deadline.
 - DECISION: things decided by Bram. Never decays. Old versions marked [SUPERSEDED] not deleted.
 - PATTERN: recurring observations across accounts or time. Generated during consolidation.
@@ -119,7 +119,7 @@ Decay rule: a SIGNAL-3 not actioned within 14 days drops to SIGNAL-2. After 30 d
 Pipe-delimited, one row per line:
 TYPE|SCORE|description|tags|deadline|status
 
-Example: SIGNAL|3|Four new COWI users added Mar 11|COWI,expansion,action-required|2026-03-28|active
+Example: SIGNAL|3|New users added at key account with no open deal|<account>,expansion,action-required|<YYYY-MM-DD>|active
 
 Status values: active, stale, resolved
 
@@ -197,34 +197,35 @@ No user present. Run full dream state protocol (all 6 steps). Rewrite Memory Gra
 
 ---
 
-## Key Accounts — Current State
+## Key Accounts — Strategic Angles (durable)
+
+Contact counts, scores, and deal states are NOT stored here — pull them live from HubSpot via MCP each time you need them. The items below are strategic context only: positioning, relationships, and structural facts that don't drift week to week.
 
 ### COWI
-154 HubSpot contacts, avg score 6.9, 70% Tier 1. Largest account. Active on Femern project. No open deal despite strong engagement. Four new users added Mar 11. memg@cowi.com is likely champion. Strategic angle: project-to-enterprise expansion. COWI is also consultant on the Fehmarnbelt tunnel.
+Largest account by engagement. Femern project is the entry point; strategic play is project-to-enterprise. memg@cowi.com is a likely champion (survey respondent, scores non-BIM communication 4/10). COWI is also consultant on the Fehmarnbelt tunnel.
 
 ### Ramboll
-13 contacts (DK), 3 (global), 1 (UK). Two live Vitus users (alsk@ and csdp@ at ramboll.dk) — identity unknown. No deal recorded. Last HubSpot note Mar 9. Strategic angle: multi-CDE environments, ISO 19650 compliance, multi-stakeholder sale.
+Angle: multi-CDE environments, large infrastructure, ISO 19650 compliance. Consultancy acts in both appointing and appointed party roles, so deals are multi-stakeholder.
 
 ### CN3
-35 contacts, avg score 7.0, 74% Tier 1. Strong engagement.
+Strong engagement historically. Worth periodic outreach checks via live HubSpot signals.
 
 ### FLC (Femern project)
-295 contacts via project email. Real employer unknown for most. FLC consortium: VINCI, Aarsleff, Max Bögl, BAM, Wayss & Freytag, CFE, Solétanche-Bachy, DEME. COWI is consultant. Fehmarnbelt tunnel runs to ~2031. Enrichment target: real_company via LinkedHelper by end Q2 2026.
-
-### DEME
-6 contacts, avg score 4.8, 50% Tier 1. Lowest engagement. Needs check-in.
-
-### SBF
-4 contacts, avg score 7.2, 75% Tier 1.
+Contacts arrive via project email, so real employer is often unknown. FLC consortium: VINCI, Aarsleff, Max Bögl, BAM, Wayss & Freytag, CFE, Solétanche-Bachy, DEME. COWI is consultant. Enrichment target: real_company field by end Q2 2026.
 
 ### Max Bögl
-2 contacts, avg score 8.0, 100% Tier 1. Both scored 9/9. Small but strategically significant.
+Small contact base but consistently high-scoring. Strategically significant for consortium leverage.
+
+### Other accounts (DEME, SBF, others)
+State varies week to week. Always query HubSpot before reasoning about engagement or deal state.
 
 ---
 
-## Platform Baseline (23 March 2026)
+## Platform Baseline
 
-515 contacts tracked. Avg score 6.1. 58% Tier 1 (298), 29% Tier 2 (151), 10% Tier 3 (51), 2% inactive (12).
+**Live state lives in HubSpot.** Do not cache adoption counts, tier distributions, or account sizes in memory or in this file — they drift the moment a contact is added, scored, or churned. When Bonaparte needs a current number, it queries HubSpot via the MCP connector at brief time.
+
+Historical baselines (e.g. March 2026 adoption snapshot) live in the Adoption Report Slack canvas (F0ANBBH0GKE), not here.
 
 ---
 
@@ -346,7 +347,6 @@ HUBSPOT_TOKEN=...                HubSpot private app token (dashboard reads)
 ANTHROPIC_API_KEY=...            Optional, falls back to Claude Code OAuth
 VITUS_API_KEY=...                Vitus platform API key (read-only)
 TAVILY_API_KEY=...               Web search for research mode
-APP_PASSWORD=...                 Login for the Bonaparte web UI
 PORT=3000                        Server port
 
 MCP connectors handle Slack/HubSpot auth for interactive sessions and scheduled triggers.

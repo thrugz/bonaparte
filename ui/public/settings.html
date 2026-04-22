@@ -23,7 +23,8 @@
       display: grid; grid-template-columns: 180px 1fr 80px 80px; gap: 12px; align-items: center;
       padding: 10px 14px; background: var(--bg-1); border: 1px solid var(--border); border-radius: 6px;
     }
-    .token-label { font-family: var(--font-mono); font-size: 13px; color: var(--text-3); }
+    .token-label { font-family: var(--font-mono); font-size: 13px; color: var(--text-3); cursor: help; }
+    .token-label .hint { color: var(--accent); font-weight: 600; }
     .token-value { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
     .token-status { font-size: 13px; text-align: center; }
     .token-status.ok { color: var(--green); }
@@ -63,6 +64,19 @@
     .log-table .error { color: var(--red); }
     .log-table .running { color: var(--accent); }
     .log-table .summary { color: var(--text-2); font-size: 12px; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .roles-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .roles-table th { text-align: left; font-size: 12px; color: var(--text-3); padding: 8px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
+    .roles-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+    .roles-table input {
+      width: 100%; padding: 6px 8px; background: var(--bg-1); color: var(--text);
+      border: 1px solid var(--border); border-radius: 4px; font-family: var(--font-body); font-size: 13px;
+    }
+    .roles-table input:focus { outline: none; border-color: var(--accent); }
+    .roles-table .mono input { font-family: var(--font-mono); }
+    .roles-table .remove { background: transparent; border: none; color: var(--text-3); cursor: pointer; font-size: 16px; padding: 0 6px; }
+    .roles-table .remove:hover { color: var(--red); }
+    .roles-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -84,6 +98,20 @@
 
     <h2>Tokens</h2>
     <div class="token-grid" id="tokens"></div>
+
+    <h2>Roles</h2>
+    <p class="remote-hint" style="margin:-0.5rem 0 0.5rem">
+      Identify the people at Vitus with their titles so Bonaparte can ground context and addressing across DMs, briefs, and drafts. HubSpot owner ID and Slack user ID are optional but unlock better signal routing.
+    </p>
+    <table class="roles-table" id="roles">
+      <thead><tr><th>Name</th><th>Title</th><th>HubSpot Owner ID</th><th>Slack User ID</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="roles-actions">
+      <button onclick="addRole()">+ Add person</button>
+      <button class="primary" onclick="saveRoles()" id="roles-save">Save roles</button>
+      <span id="roles-status" class="remote-hint"></span>
+    </div>
 
     <h2>Scheduled Jobs</h2>
     <p class="remote-hint" style="margin:-0.5rem 0 0.5rem">
@@ -112,6 +140,16 @@
       if (r.status === 401) location.href = '/login';
     }
 
+    const TOKEN_HINTS = {
+      SLACK_BOT_TOKEN: "xoxb-… Bonaparte bot sends DMs as 'Bonaparte'. Slack app → OAuth & Permissions → Bot User OAuth Token.",
+      SLACK_USER_TOKEN: "xoxp-… Canvas reads and writes. Slack app → OAuth & Permissions → User OAuth Token.",
+      SLACK_APP_TOKEN: "xapp-… Socket Mode for the bot. Slack app → Basic Information → App-Level Tokens (scope: connections:write).",
+      HUBSPOT_TOKEN: "HubSpot private app token. HubSpot → Settings → Integrations → Private Apps → create app, copy access token.",
+      VITUS_API_KEY: "Vitus platform API key, read-only. Ask a Vitus admin to mint one.",
+      TAVILY_API_KEY: "Web search for research and feature hunt. tavily.com → API Keys.",
+      ANTHROPIC_API_KEY: "Optional. Falls back to the Claude Code OAuth token at ~/.claude/.credentials.json when empty.",
+    };
+
     async function loadTokens() {
       const r = await fetch('/api/settings/tokens');
       const tokens = await r.json();
@@ -120,12 +158,36 @@
       for (const [key, masked] of Object.entries(tokens)) {
         const row = document.createElement('div');
         row.className = 'token-row';
-        row.innerHTML = `
-          <span class="token-label">${key}</span>
-          <span class="token-value">${masked}</span>
-          <span class="token-status pending" id="status-${key}">—</span>
-          <button onclick="testToken('${key}')">Test</button>
-        `;
+
+        const label = document.createElement('span');
+        label.className = 'token-label';
+        const hint = TOKEN_HINTS[key] || '';
+        label.textContent = key;
+        if (hint) {
+          label.title = hint;
+          const mark = document.createElement('span');
+          mark.className = 'hint';
+          mark.textContent = ' ?';
+          label.appendChild(mark);
+        }
+
+        const value = document.createElement('span');
+        value.className = 'token-value';
+        value.textContent = masked;
+
+        const status = document.createElement('span');
+        status.className = 'token-status pending';
+        status.id = 'status-' + key;
+        status.textContent = '—';
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Test';
+        btn.addEventListener('click', () => testToken(key));
+
+        row.appendChild(label);
+        row.appendChild(value);
+        row.appendChild(status);
+        row.appendChild(btn);
         el.appendChild(row);
       }
     }
@@ -209,9 +271,77 @@
       await loadJobs();
     }
 
+    let rolesState = [];
+
+    function renderRoles() {
+      const tbody = document.querySelector('#roles tbody');
+      tbody.innerHTML = '';
+      rolesState.forEach((role, i) => {
+        const tr = document.createElement('tr');
+        const cells = [
+          { key: 'name', placeholder: 'Full name' },
+          { key: 'title', placeholder: 'Role / title' },
+          { key: 'hubspot_owner_id', placeholder: 'optional', mono: true },
+          { key: 'slack_user_id', placeholder: 'optional', mono: true },
+        ];
+        for (const c of cells) {
+          const td = document.createElement('td');
+          if (c.mono) td.className = 'mono';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = role[c.key] || '';
+          input.placeholder = c.placeholder;
+          input.addEventListener('input', (e) => { rolesState[i][c.key] = e.target.value; });
+          td.appendChild(input);
+          tr.appendChild(td);
+        }
+        const tdRemove = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.className = 'remove';
+        btn.textContent = '×';
+        btn.title = 'Remove';
+        btn.addEventListener('click', () => { rolesState.splice(i, 1); renderRoles(); });
+        tdRemove.appendChild(btn);
+        tr.appendChild(tdRemove);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function addRole() {
+      rolesState.push({ name: '', title: '', hubspot_owner_id: '', slack_user_id: '' });
+      renderRoles();
+    }
+
+    async function loadRoles() {
+      const r = await fetch('/api/settings/roles');
+      rolesState = await r.json();
+      renderRoles();
+    }
+
+    async function saveRoles() {
+      const status = document.getElementById('roles-status');
+      const btn = document.getElementById('roles-save');
+      btn.disabled = true;
+      status.textContent = 'Saving…';
+      const r = await fetch('/api/settings/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roles: rolesState }),
+      });
+      btn.disabled = false;
+      if (r.ok) {
+        const data = await r.json();
+        rolesState = data.roles;
+        renderRoles();
+        status.textContent = 'Saved ' + new Date().toLocaleTimeString();
+      } else {
+        status.textContent = 'Save failed';
+      }
+    }
+
     async function init() {
       await checkAuth();
-      await Promise.all([loadTokens(), loadJobs()]);
+      await Promise.all([loadTokens(), loadJobs(), loadRoles()]);
     }
     init();
     setInterval(loadJobs, 30000);

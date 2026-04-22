@@ -1,20 +1,68 @@
 {
   "name": "bonaparte",
-  "version": "2.0.0",
+  "version": "3.1.0",
   "description": "Strategic AI tooling for Vitus",
+  "main": "electron/main.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "build": "node scripts/build.js"
+    "app": "electron .",
+    "build": "electron-builder --win",
+    "release": "node scripts/release.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@slack/bolt": "^4.7.0",
     "dotenv": "^16.4.7",
-    "express": "^4.21.0",
-    "express-session": "^1.18.0"
+    "express": "^4.21.0"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "electron": "^41.2.2",
+    "electron-builder": "^26.8.1"
+  },
+  "author": {
+    "name": "Vitus",
+    "email": "bla@vitus.cloud"
+  },
+  "build": {
+    "appId": "com.vitus.bonaparte",
+    "productName": "Bonaparte",
+    "copyright": "Copyright © 2026 Vitus",
+    "directories": {
+      "output": "X:/bonaparte-release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "electron/**/*",
+      "server.js",
+      "lib/**/*",
+      "tools/**/*",
+      "middleware/**/*",
+      "jobs/**/*",
+      "ui/**/*",
+      "data/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "assets/bonaparte.ico", "to": "bonaparte.ico" },
+      { "from": ".env.example", "to": ".env.example" }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/bonaparte.ico",
+      "artifactName": "BonaparteSetup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Bonaparte",
+      "runAfterFinish": true
+    }
   }
 }

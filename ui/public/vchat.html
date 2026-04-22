@@ -124,10 +124,7 @@
       <a href="/features">Feature Hunt</a>
       <a href="/vchat" class="active">vChat</a>
       <a href="/content">Content</a>
-      <a href="/settings">Settings</a>
-      <span class="nav-sep"></span>
-      <a href="/logout" class="logout">Log out</a>
-    </nav>
+      <a href="/settings">Settings</a></nav>
   </div>
 
   <div class="chat-container">
@@ -155,14 +152,7 @@
   <script src="/toast.js"></script>
   <script>
     let chatHistory = [];
-    let panelContext = null;
-
-    async function checkAuth() {
-      const r = await fetch('/api/me');
-      if (r.status === 401) location.href = '/login';
-    }
-
-    // Check for panel context passed via URL params
+    let panelContext = null;// Check for panel context passed via URL params
     function loadPanelContext() {
       const params = new URLSearchParams(location.search);
       const type = params.get('context');
@@ -486,11 +476,11 @@
     }
 
     async function init() {
-      await checkAuth();
       loadPanelContext();
       renderPatterns(false);
     }
     init();
   </script>
+  <script src="/update-check.js" defer></script>
 </body>
 </html>

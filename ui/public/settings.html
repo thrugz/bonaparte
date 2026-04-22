@@ -77,6 +77,16 @@
     .roles-table .remove { background: transparent; border: none; color: var(--text-3); cursor: pointer; font-size: 16px; padding: 0 6px; }
     .roles-table .remove:hover { color: var(--red); }
     .roles-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+
+    .mem-health { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .mem-card { background: var(--bg-1); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; }
+    .mem-card h4 { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; margin-bottom: 6px; }
+    .mem-card .mem-big { font-size: 22px; font-family: var(--font-head); color: var(--accent); }
+    .mem-card .mem-sub { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); margin-top: 4px; }
+    .mem-bulletin { grid-column: 1 / -1; }
+    .mem-bulletin p { white-space: pre-wrap; font-size: 13px; color: var(--text-2); line-height: 1.5; }
+    .mem-journal { grid-column: 1 / -1; font-family: var(--font-mono); font-size: 12px; color: var(--text-3); }
+    .mem-journal div { padding: 3px 0; border-bottom: 1px solid var(--border); }
   </style>
 </head>
 <body>
@@ -89,10 +99,7 @@
       <a href="/features">Feature Hunt</a>
       <a href="/vchat">vChat</a>
       <a href="/content">Content</a>
-      <a href="/settings" class="active">Settings</a>
-      <span class="nav-sep"></span>
-      <a href="/logout" class="logout">Log out</a>
-    </nav>
+      <a href="/settings" class="active">Settings</a></nav>
   </div>
   <div class="container">
 
@@ -111,6 +118,16 @@
       <button onclick="addRole()">+ Add person</button>
       <button class="primary" onclick="saveRoles()" id="roles-save">Save roles</button>
       <span id="roles-status" class="remote-hint"></span>
+    </div>
+
+    <h2>Memory health</h2>
+    <p class="remote-hint" style="margin:-0.5rem 0 0.5rem">
+      Bonaparte learns facts from every chat turn. A 30-minute heartbeat dedupes, links, decays, and rewrites the rolling bulletin every chat turn sees.
+    </p>
+    <div id="mem-health" class="mem-health"></div>
+    <div class="roles-actions">
+      <button onclick="runHeartbeat()" id="hb-run">Run heartbeat now</button>
+      <span id="hb-status" class="remote-hint"></span>
     </div>
 
     <h2>Scheduled Jobs</h2>
@@ -134,13 +151,7 @@
   </div>
 
   <script src="/toast.js"></script>
-  <script>
-    async function checkAuth() {
-      const r = await fetch('/api/me');
-      if (r.status === 401) location.href = '/login';
-    }
-
-    const TOKEN_HINTS = {
+  <script>const TOKEN_HINTS = {
       SLACK_BOT_TOKEN: "xoxb-… Bonaparte bot sends DMs as 'Bonaparte'. Slack app → OAuth & Permissions → Bot User OAuth Token.",
       SLACK_USER_TOKEN: "xoxp-… Canvas reads and writes. Slack app → OAuth & Permissions → User OAuth Token.",
       SLACK_APP_TOKEN: "xapp-… Socket Mode for the bot. Slack app → Basic Information → App-Level Tokens (scope: connections:write).",
@@ -339,12 +350,91 @@
       }
     }
 
+    async function loadMemoryHealth() {
+      const r = await fetch("/api/memory/health");
+      if (!r.ok) return;
+      const h = await r.json();
+      const el = document.getElementById("mem-health");
+      el.innerHTML = "";
+
+      const counts = document.createElement("div");
+      counts.className = "mem-card";
+      const typeBits = Object.entries(h.byType || {}).map(([k, v]) => `${k}:${v}`).join(" · ");
+      counts.innerHTML = `<h4>Active nodes</h4><div class="mem-big">${h.active}</div><div class="mem-sub">${typeBits || "—"}</div>`;
+      el.appendChild(counts);
+
+      const tier = document.createElement("div");
+      tier.className = "mem-card";
+      tier.innerHTML = `<h4>Tier</h4><div class="mem-big">${(h.byTier?.working ?? 0)} / ${(h.byTier?.graph ?? 0)}</div><div class="mem-sub">working / graph</div>`;
+      el.appendChild(tier);
+
+      const heartbeat = document.createElement("div");
+      heartbeat.className = "mem-card";
+      const last = h.lastHeartbeatAt ? new Date(h.lastHeartbeatAt).toLocaleString() : "never";
+      heartbeat.innerHTML = `<h4>Last heartbeat</h4><div class="mem-big" style="font-size:14px">${last}</div><div class="mem-sub">${h.lastHeartbeatSummary || "—"}</div>`;
+      el.appendChild(heartbeat);
+
+      const forgotten = document.createElement("div");
+      forgotten.className = "mem-card";
+      forgotten.innerHTML = `<h4>Forgotten</h4><div class="mem-big">${h.forgotten}</div><div class="mem-sub">merged or pruned</div>`;
+      el.appendChild(forgotten);
+
+      if (h.bulletin) {
+        const b = document.createElement("div");
+        b.className = "mem-card mem-bulletin";
+        const p = document.createElement("p");
+        p.textContent = h.bulletin;
+        const title = document.createElement("h4");
+        title.textContent = "Rolling bulletin";
+        b.appendChild(title);
+        b.appendChild(p);
+        el.appendChild(b);
+      }
+
+      if (h.journal?.length) {
+        const j = document.createElement("div");
+        j.className = "mem-card mem-journal";
+        const title = document.createElement("h4");
+        title.textContent = "Recent ticks";
+        j.appendChild(title);
+        for (const t of h.journal) {
+          const row = document.createElement("div");
+          const ops = t.ops || {};
+          const line = `${new Date(t.at).toLocaleString()} · ${ops.scope?.mode || "?"}(${ops.scope?.size || 0}/${ops.scope?.total || 0}) · demoted=${ops.demoted || 0} decayed=${ops.decayed || 0} pruned=${ops.pruned || 0} merged=${ops.merged || 0}` + (t.notes?.length ? ` · ${t.notes.join(",")}` : "");
+          row.textContent = line;
+          j.appendChild(row);
+        }
+        el.appendChild(j);
+      }
+    }
+
+    async function runHeartbeat() {
+      const btn = document.getElementById("hb-run");
+      const status = document.getElementById("hb-status");
+      btn.disabled = true;
+      status.textContent = "Running…";
+      try {
+        const r = await fetch("/api/memory/heartbeat/run", { method: "POST" });
+        const d = await r.json();
+        if (d.ok) {
+          status.textContent = "Done " + new Date().toLocaleTimeString();
+          await loadMemoryHealth();
+        } else {
+          status.textContent = d.error || "Failed";
+        }
+      } catch (e) {
+        status.textContent = "Failed";
+      }
+      btn.disabled = false;
+    }
+
     async function init() {
-      await checkAuth();
-      await Promise.all([loadTokens(), loadJobs(), loadRoles()]);
+      await Promise.all([loadTokens(), loadJobs(), loadRoles(), loadMemoryHealth()]);
     }
     init();
     setInterval(loadJobs, 30000);
+    setInterval(loadMemoryHealth, 60000);
   </script>
+  <script src="/update-check.js" defer></script>
 </body>
 </html>

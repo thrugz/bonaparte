@@ -150,10 +150,7 @@
       <a href="/features">Feature Hunt</a>
       <a href="/vchat">vChat</a>
       <a href="/content">Content</a>
-      <a href="/settings">Settings</a>
-      <span class="nav-sep"></span>
-      <a href="/logout" class="logout">Log out</a>
-    </nav>
+      <a href="/settings">Settings</a></nav>
   </div>
   <div class="container">
 
@@ -184,14 +181,7 @@
   <script>
     let filterType = 'all';
     let filterRange = 'week';
-    let refreshTimer = null;
-
-    async function checkAuth() {
-      const r = await fetch('/api/me');
-      if (r.status === 401) location.href = '/login';
-    }
-
-    function setType(type) {
+    let refreshTimer = null;function setType(type) {
       filterType = type;
       document.querySelectorAll('#typeFilters .filter-btn').forEach(b => {
         b.classList.toggle('active', b.textContent.toLowerCase() === type || (type === 'all' && b.textContent === 'All'));
@@ -308,12 +298,12 @@
     }
 
     async function init() {
-      await checkAuth();
       await loadTimeline();
       // Auto-refresh every 2 minutes
       refreshTimer = setInterval(loadTimeline, 120000);
     }
     init();
   </script>
+  <script src="/update-check.js" defer></script>
 </body>
 </html>

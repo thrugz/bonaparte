@@ -6,20 +6,23 @@
  * Usage: npm start
  */
 import express from "express";
-import session from "express-session";
 import { readFileSync, writeFileSync, existsSync } from "fs";
+import { resolve } from "path";
 import { assetPath, userPath, ensureUserDir } from "./lib/paths.js";
 
 ensureUserDir();
 
-import { requireAuth, loginHandler, logoutHandler, meHandler } from "./middleware/auth.js";
+import { VERSION, MANIFEST_RELATIVE, MANIFEST_FILE, INSTALLER_FILE } from "./lib/version.js";
+import os from "os";
+import { spawn } from "child_process";
 import { getRecentRuns, getLastRun, getMemoryNodes, setMemoryNodes } from "./lib/db.js";
 import { SLACK_BOT_TOKEN, HUBSPOT_TOKEN } from "./tools/config.js";
-import { startScheduler, getScheduledJobs, runJobManually } from "./jobs/scheduler.js";
+import { startScheduler, getScheduledJobs, runJobManually, runHeartbeatNow } from "./jobs/scheduler.js";
 import { startSlackBot } from "./lib/slack-bot.js";
 import { getSetting, setSetting } from "./lib/db.js";
 import { search } from "./tools/research.js";
-import { evaluateFeatures, evaluateCompetitor, chat, chatStream } from "./lib/claude.js";
+import { evaluateFeatures, evaluateCompetitor, chat, chatStream, extractFacts } from "./lib/claude.js";
+import { appendNode, buildRetrievalSlots, formatSlotsForPrompt, getBulletin, getHealth } from "./lib/memory.js";
 
 const PORT = process.env.PORT || 3000;
 
@@ -46,54 +49,24 @@ if (getMemoryNodes().length === 0) {
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(session({
-  secret: process.env.APP_PASSWORD || "bonaparte-default-secret",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }, // 7 days
-}));
 
-// ── Auth routes ──
+// ── Static pages ──
 
-app.get("/login", (req, res) => {
-  res.sendFile(assetPath("ui", "public", "login.html"));
-});
-app.post("/login", loginHandler);
-app.get("/logout", logoutHandler);
-app.get("/api/me", meHandler);
-
-// ── Static files (after login check for main pages) ──
-
-app.get("/", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "index.html"));
-});
-app.get("/settings", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "settings.html"));
-});
-app.get("/timeline", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "timeline.html"));
-});
-app.get("/competitors", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "competitors.html"));
-});
-app.get("/features", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "features.html"));
-});
-app.get("/vchat", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "vchat.html"));
-});
-app.get("/content", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "content.html"));
-});
-app.get("/timeline", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "timeline.html"));
-});
-app.get("/account", requireAuth, (req, res) => {
-  res.sendFile(assetPath("ui", "public", "account.html"));
-});
+const PAGES = {
+  "/":            "index.html",
+  "/settings":    "settings.html",
+  "/timeline":    "timeline.html",
+  "/competitors": "competitors.html",
+  "/features":    "features.html",
+  "/vchat":       "vchat.html",
+  "/content":     "content.html",
+  "/account":     "account.html",
+};
+for (const [route, file] of Object.entries(PAGES)) {
+  app.get(route, (_req, res) => res.sendFile(assetPath("ui", "public", file)));
+}
 app.use(express.static(assetPath("ui", "public")));
 
 // ── HubSpot helpers ──
@@ -197,7 +170,7 @@ async function fetchAllContacts() {
 
 // ── API routes (all require auth) ──
 
-app.get("/api/memory", requireAuth, (req, res) => {
+app.get("/api/memory", (req, res) => {
   try {
     const nodes = getMemoryNodes();
     res.json(nodes);
@@ -206,7 +179,7 @@ app.get("/api/memory", requireAuth, (req, res) => {
   }
 });
 
-app.post("/api/memory", requireAuth, (req, res) => {
+app.post("/api/memory", (req, res) => {
   try {
     const nodes = req.body;
     if (!Array.isArray(nodes)) return res.status(400).json({ error: "Expected array of nodes" });
@@ -217,7 +190,24 @@ app.post("/api/memory", requireAuth, (req, res) => {
   }
 });
 
-app.get("/api/bulletin", requireAuth, (req, res) => {
+app.get("/api/memory/health", (_req, res) => {
+  try {
+    res.json(getHealth());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/memory/heartbeat/run", async (_req, res) => {
+  try {
+    await runHeartbeatNow();
+    res.json({ ok: true, ...getHealth() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/bulletin", (req, res) => {
   try {
     // Prefer Claude-generated bulletin from last consolidation
     const stored = getSetting("last_bulletin");
@@ -247,7 +237,7 @@ app.get("/api/bulletin", requireAuth, (req, res) => {
   }
 });
 
-app.get("/api/contacts", requireAuth, async (req, res) => {
+app.get("/api/contacts", async (req, res) => {
   try {
     const props = CONTACT_PROPS.join(",");
     const r = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts?limit=100&properties=${props}`, {
@@ -261,14 +251,14 @@ app.get("/api/contacts", requireAuth, async (req, res) => {
   }
 });
 
-app.get("/api/contacts/all", requireAuth, async (req, res) => {
+app.get("/api/contacts/all", async (req, res) => {
   try { res.json(await fetchAllContacts()); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // Deals route moved to bottom (supports ?company= filter)
 
-app.get("/api/pilots", requireAuth, async (req, res) => {
+app.get("/api/pilots", async (req, res) => {
   try {
     const data = await hsSearch("deals", [
       { filters: [{ propertyName: "dealstage", operator: "EQ", value: "decisionmakerboughtin" }] },
@@ -288,14 +278,14 @@ app.get("/api/pilots", requireAuth, async (req, res) => {
   }
 });
 
-app.get("/api/purgatory", requireAuth, async (req, res) => {
+app.get("/api/purgatory", async (req, res) => {
   try {
     const all = await fetchAllContacts();
     res.json(all.filter((c) => c.purgatory));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.get("/api/champions", requireAuth, async (req, res) => {
+app.get("/api/champions", async (req, res) => {
   try {
     const all = await fetchAllContacts();
     res.json(all.filter((c) => c.tier === 1).sort((a, b) => b.score - a.score));
@@ -304,7 +294,7 @@ app.get("/api/champions", requireAuth, async (req, res) => {
 
 // ── Job routes ──
 
-app.get("/api/jobs", requireAuth, async (req, res) => {
+app.get("/api/jobs", async (req, res) => {
   try {
     const runs = getRecentRuns(50);
     const scheduled = await getScheduledJobs();
@@ -314,7 +304,7 @@ app.get("/api/jobs", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/jobs/:name/run", requireAuth, async (req, res) => {
+app.post("/api/jobs/:name/run", async (req, res) => {
   try {
     const result = await runJobManually(req.params.name);
     res.json(result);
@@ -328,7 +318,7 @@ app.post("/api/jobs/:name/run", requireAuth, async (req, res) => {
 
 const TOKEN_KEYS = ["SLACK_BOT_TOKEN", "SLACK_USER_TOKEN", "SLACK_APP_TOKEN", "HUBSPOT_TOKEN", "VITUS_API_KEY", "TAVILY_API_KEY", "ANTHROPIC_API_KEY"];
 
-app.get("/api/settings/tokens", requireAuth, (req, res) => {
+app.get("/api/settings/tokens", (req, res) => {
   const tokens = {};
   for (const key of TOKEN_KEYS) {
     const val = process.env[key] || "";
@@ -337,7 +327,7 @@ app.get("/api/settings/tokens", requireAuth, (req, res) => {
   res.json(tokens);
 });
 
-app.post("/api/settings/tokens", requireAuth, (req, res) => {
+app.post("/api/settings/tokens", (req, res) => {
   try {
     const updates = req.body; // { KEY: "value", ... }
     const envPath = userPath(".env");
@@ -368,12 +358,12 @@ const DEFAULT_ROLES = [
   { name: "Stine Kjærsgaard", title: "Team member", hubspot_owner_id: "49882854", slack_user_id: "" },
 ];
 
-app.get("/api/settings/roles", requireAuth, (req, res) => {
+app.get("/api/settings/roles", (req, res) => {
   const roles = getSetting("roles");
   res.json(roles ?? DEFAULT_ROLES);
 });
 
-app.post("/api/settings/roles", requireAuth, (req, res) => {
+app.post("/api/settings/roles", (req, res) => {
   try {
     const roles = Array.isArray(req.body?.roles) ? req.body.roles : null;
     if (!roles) return res.status(400).json({ error: "Expected { roles: [...] }" });
@@ -392,7 +382,80 @@ app.post("/api/settings/roles", requireAuth, (req, res) => {
   }
 });
 
-app.post("/api/settings/test-token", requireAuth, async (req, res) => {
+// ── Version check ──
+// Reads latest.json from the user's synced CN3 A/S OneDrive library. No
+// HTTP, no auth. If the user hasn't synced that library, the endpoint
+// silently returns hasUpdate:false and the banner never appears.
+
+function cmpSemver(a, b) {
+  const pa = String(a || "0").split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = String(b || "0").split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) > (pb[i] || 0)) return 1;
+    if ((pa[i] || 0) < (pb[i] || 0)) return -1;
+  }
+  return 0;
+}
+
+function manifestDir() {
+  return resolve(os.homedir(), ...MANIFEST_RELATIVE.split("/"));
+}
+
+app.get("/api/version", (_req, res) => {
+  const base = { current: VERSION, latest: null, notes: null, hasUpdate: false };
+  const dir = manifestDir();
+  const manifestPath = resolve(dir, MANIFEST_FILE);
+  const installerPath = resolve(dir, INSTALLER_FILE);
+
+  if (!existsSync(manifestPath)) return res.json(base);
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    res.json({
+      current: VERSION,
+      latest: manifest.version || null,
+      notes: manifest.notes || null,
+      installerAvailable: existsSync(installerPath),
+      hasUpdate: manifest.version ? cmpSemver(manifest.version, VERSION) > 0 : false,
+    });
+  } catch (err) {
+    res.json({ ...base, error: err.message });
+  }
+});
+
+app.post("/api/run-update", (_req, res) => {
+  const installer = resolve(manifestDir(), INSTALLER_FILE);
+  if (!existsSync(installer)) {
+    return res.status(404).json({ error: "Installer not found in OneDrive folder." });
+  }
+  // Detach so the installer survives after this server and tray exit.
+  spawn(installer, [], { detached: true, stdio: "ignore" }).unref();
+  res.json({ ok: true });
+
+  // After the response flushes, close the dashboard browser window, kill
+  // the tray (PowerShell), and exit ourselves — so the installer wizard
+  // is the only thing on screen.
+  setTimeout(() => {
+    try {
+      spawn("powershell.exe", [
+        "-NoProfile",
+        "-Command",
+        "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe' OR Name='chrome.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('--app=http://localhost:3000') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
+      ], { stdio: "ignore", detached: true, windowsHide: true }).unref();
+    } catch {}
+
+    try {
+      const pidFile = userPath("tray.pid");
+      if (existsSync(pidFile)) {
+        const pid = parseInt(readFileSync(pidFile, "utf8").trim(), 10);
+        if (pid) process.kill(pid);
+      }
+    } catch {}
+
+    process.exit(0);
+  }, 400);
+});
+
+app.post("/api/settings/test-token", async (req, res) => {
   const { key } = req.body;
   const value = process.env[key];
   if (!value) return res.json({ ok: false, error: "Not configured" });
@@ -450,11 +513,11 @@ function getCompetitors() {
   return DEFAULT_COMPETITORS;
 }
 
-app.get("/api/competitors", requireAuth, (req, res) => {
+app.get("/api/competitors", (req, res) => {
   res.json(getCompetitors());
 });
 
-app.post("/api/competitors", requireAuth, (req, res) => {
+app.post("/api/competitors", (req, res) => {
   const competitors = req.body;
   if (!Array.isArray(competitors)) return res.status(400).json({ error: "Expected array" });
   setSetting("competitors", JSON.stringify(competitors));
@@ -462,12 +525,12 @@ app.post("/api/competitors", requireAuth, (req, res) => {
 });
 
 // Get saved competitor intel (must be before :name route)
-app.get("/api/competitors/saved/intel", requireAuth, (req, res) => {
+app.get("/api/competitors/saved/intel", (req, res) => {
   const saved = JSON.parse(getSetting("competitor_intel") || "{}");
   res.json(saved);
 });
 
-app.get("/api/competitors/:name/intel", requireAuth, async (req, res) => {
+app.get("/api/competitors/:name/intel", async (req, res) => {
   const name = decodeURIComponent(req.params.name);
   const competitors = getCompetitors();
   const comp = competitors.find((c) => c.name === name);
@@ -521,7 +584,7 @@ app.get("/api/competitors/:name/intel", requireAuth, async (req, res) => {
 });
 
 // Competitor vs Market Demand matrix
-app.get("/api/competitors/demand-matrix", requireAuth, async (req, res) => {
+app.get("/api/competitors/demand-matrix", async (req, res) => {
   const insightsPath = assetPath("data", "survey-insights.json");
   if (!existsSync(insightsPath)) return res.status(404).json({ error: "No survey data" });
 
@@ -603,18 +666,18 @@ function getFeatureSources() {
   return DEFAULT_FEATURE_SOURCES;
 }
 
-app.get("/api/features/sources", requireAuth, (req, res) => {
+app.get("/api/features/sources", (req, res) => {
   res.json(getFeatureSources());
 });
 
-app.post("/api/features/sources", requireAuth, (req, res) => {
+app.post("/api/features/sources", (req, res) => {
   const sources = req.body;
   if (!Array.isArray(sources)) return res.status(400).json({ error: "Expected array" });
   setSetting("feature_sources", JSON.stringify(sources));
   res.json({ ok: true });
 });
 
-app.get("/api/features/hunt", requireAuth, async (req, res) => {
+app.get("/api/features/hunt", async (req, res) => {
   const sources = getFeatureSources();
 
   try {
@@ -664,20 +727,20 @@ app.get("/api/features/hunt", requireAuth, async (req, res) => {
 
 // ── Content Ideas routes ──
 
-app.get("/api/content/ideas", requireAuth, (req, res) => {
+app.get("/api/content/ideas", (req, res) => {
   const saved = getSetting("content_ideas");
   if (!saved) return res.json(null);
   try { res.json(JSON.parse(saved)); } catch { res.json(null); }
 });
 
-app.post("/api/content/ideas", requireAuth, (req, res) => {
+app.post("/api/content/ideas", (req, res) => {
   const data = req.body;
   if (!data) return res.status(400).json({ error: "No data" });
   setSetting("content_ideas", JSON.stringify(data));
   res.json({ ok: true });
 });
 
-app.post("/api/content/generate", requireAuth, async (req, res) => {
+app.post("/api/content/generate", async (req, res) => {
   const { category } = req.body || {};
 
   try {
@@ -746,7 +809,7 @@ Respond with ONLY a valid JSON array.`;
 });
 
 // Save feature hunt results
-app.post("/api/features/save", requireAuth, (req, res) => {
+app.post("/api/features/save", (req, res) => {
   const data = req.body;
   if (!data || !data.features) return res.status(400).json({ error: "No features to save" });
   setSetting("saved_features", JSON.stringify(data));
@@ -754,7 +817,7 @@ app.post("/api/features/save", requireAuth, (req, res) => {
 });
 
 // Get saved feature hunt results
-app.get("/api/features/saved", requireAuth, (req, res) => {
+app.get("/api/features/saved", (req, res) => {
   const saved = getSetting("saved_features");
   if (!saved) return res.json(null);
   try {
@@ -766,7 +829,7 @@ app.get("/api/features/saved", requireAuth, (req, res) => {
 
 // ── vChat routes ──
 
-app.post("/api/chat", requireAuth, async (req, res) => {
+app.post("/api/chat", async (req, res) => {
   const { messages, context_type, context_data } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "messages array required" });
@@ -776,15 +839,15 @@ app.post("/api/chat", requireAuth, async (req, res) => {
     // Build data context from available sources
     const contextParts = [];
 
-    // Always include memory nodes (sync, instant)
-    const nodes = getMemoryNodes();
-    const activeSignals = nodes.filter(n => n.type === "SIGNAL" && n.status === "active");
-    const facts = nodes.filter(n => n.type === "FACT" && n.status === "active");
-    const patterns = nodes.filter(n => n.type === "PATTERN" && n.status === "active");
-    contextParts.push(`MEMORY NODES:
-Signals (${activeSignals.length}): ${activeSignals.map(s => `[${s.score}] ${s.description}`).join("; ")}
-Facts (${facts.length}): ${facts.map(f => f.description).join("; ")}
-Patterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
+    // Memory: cached bulletin + deterministic slots (no LLM-in-the-loop).
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content || "";
+    const memSlots = buildRetrievalSlots({ userMessage: lastUserMsg });
+    const memBulletin = getBulletin();
+    const memBlock = [];
+    if (memBulletin) memBlock.push(`ROLLING BULLETIN:\n${memBulletin}`);
+    const slotText = formatSlotsForPrompt(memSlots);
+    if (slotText) memBlock.push(`MEMORY SLOTS:\n${slotText}`);
+    if (memBlock.length) contextParts.push(memBlock.join("\n\n"));
 
     // Load market demand (sync file read, instant)
     const insightsPath = assetPath("data", "survey-insights.json");
@@ -886,14 +949,35 @@ Patterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
     const dataContext = contextParts.join("\n\n---\n\n");
     const reply = await chat(messages, dataContext);
     res.json({ reply });
+    // Fire-and-forget fact extraction. Never block the chat response.
+    extractAndAppend(lastUserMsg, reply).catch(() => {});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+async function extractAndAppend(userMsg, assistantMsg) {
+  try {
+    const facts = await extractFacts(userMsg, assistantMsg);
+    for (const f of facts) {
+      appendNode({
+        type: f.type,
+        description: f.description,
+        tags: f.tags,
+        source: "chat",
+        tier: "working",
+        importance: 0.3,
+      });
+    }
+    if (facts.length) console.log(`[memory] extracted ${facts.length} fact(s) from chat`);
+  } catch (err) {
+    console.warn("[memory] extraction failed:", err.message);
+  }
+}
+
 // ── Market Demand routes (Onsight survey insights) ──
 
-app.get("/api/market-demand", requireAuth, (req, res) => {
+app.get("/api/market-demand", (req, res) => {
   const insightsPath = assetPath("data", "survey-insights.json");
   if (!existsSync(insightsPath)) {
     return res.status(404).json({ error: "Survey insights data not found" });
@@ -1000,7 +1084,7 @@ function formatEventContext(events) {
   return ctx;
 }
 
-app.get("/api/emails", requireAuth, async (req, res) => {
+app.get("/api/emails", async (req, res) => {
   try {
     const emails = await fetchRecentEmails(100);
     const contact = req.query.contact;
@@ -1013,7 +1097,7 @@ app.get("/api/emails", requireAuth, async (req, res) => {
   }
 });
 
-app.get("/api/emails/stats", requireAuth, async (req, res) => {
+app.get("/api/emails/stats", async (req, res) => {
   try {
     const emails = await fetchRecentEmails(200);
     const stats = buildEmailStats(emails);
@@ -1025,7 +1109,7 @@ app.get("/api/emails/stats", requireAuth, async (req, res) => {
 
 // ── Streaming chat ──
 
-app.post("/api/chat/stream", requireAuth, async (req, res) => {
+app.post("/api/chat/stream", async (req, res) => {
   const { messages, context_type, context_data } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "messages array required" });
@@ -1041,11 +1125,14 @@ app.post("/api/chat/stream", requireAuth, async (req, res) => {
     // Build context (same as /api/chat but inline to avoid self-fetch)
     const contextParts = [];
 
-    const nodes = getMemoryNodes();
-    const activeSignals = nodes.filter(n => n.type === "SIGNAL" && n.status === "active");
-    const facts = nodes.filter(n => n.type === "FACT" && n.status === "active");
-    const patterns = nodes.filter(n => n.type === "PATTERN" && n.status === "active");
-    contextParts.push(`MEMORY NODES:\nSignals (${activeSignals.length}): ${activeSignals.map(s => `[${s.score}] ${s.description}`).join("; ")}\nFacts (${facts.length}): ${facts.map(f => f.description).join("; ")}\nPatterns (${patterns.length}): ${patterns.map(p => p.description).join("; ")}`);
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content || "";
+    const memSlots = buildRetrievalSlots({ userMessage: lastUserMsg });
+    const memBulletin = getBulletin();
+    const memBlock = [];
+    if (memBulletin) memBlock.push(`ROLLING BULLETIN:\n${memBulletin}`);
+    const slotText = formatSlotsForPrompt(memSlots);
+    if (slotText) memBlock.push(`MEMORY SLOTS:\n${slotText}`);
+    if (memBlock.length) contextParts.push(memBlock.join("\n\n"));
 
     const insightsPath = assetPath("data", "survey-insights.json");
     if (existsSync(insightsPath)) {
@@ -1123,6 +1210,7 @@ app.post("/api/chat/stream", requireAuth, async (req, res) => {
     });
     res.write(`data: ${JSON.stringify({ done: true, reply: fullReply })}\n\n`);
     res.end();
+    extractAndAppend(lastUserMsg, fullReply).catch(() => {});
   } catch (err) {
     res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
     res.end();
@@ -1131,7 +1219,7 @@ app.post("/api/chat/stream", requireAuth, async (req, res) => {
 
 // ── Contacts by company ──
 
-app.get("/api/contacts", requireAuth, async (req, res) => {
+app.get("/api/contacts", async (req, res) => {
   const company = req.query.company;
   if (!company) return res.status(400).json({ error: "company param required" });
   try {
@@ -1145,7 +1233,7 @@ app.get("/api/contacts", requireAuth, async (req, res) => {
 
 // ── Deals by company ──
 
-app.get("/api/deals", requireAuth, async (req, res) => {
+app.get("/api/deals", async (req, res) => {
   const company = req.query.company;
   try {
     const filters = company
@@ -1163,7 +1251,7 @@ app.get("/api/deals", requireAuth, async (req, res) => {
 
 // ── Timeline ──
 
-app.get("/api/timeline", requireAuth, async (req, res) => {
+app.get("/api/timeline", async (req, res) => {
   const range = req.query.range || "week";
   const typeFilter = req.query.type || "all";
 
@@ -1407,7 +1495,7 @@ async function buildEventConversion() {
   return events;
 }
 
-app.get("/api/events", requireAuth, async (req, res) => {
+app.get("/api/events", async (req, res) => {
   try {
     const events = await buildEventConversion();
     res.json(events);
@@ -1418,7 +1506,7 @@ app.get("/api/events", requireAuth, async (req, res) => {
 
 // ── Content drafts ──
 
-app.post("/api/content/drafts", requireAuth, (req, res) => {
+app.post("/api/content/drafts", (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: "text required" });
   const draftsPath = userPath("drafts.json");
@@ -1433,9 +1521,23 @@ app.post("/api/content/drafts", requireAuth, (req, res) => {
 
 // ── Start ──
 
-app.listen(PORT, () => {
-  console.log(`\n  Bonaparte`);
-  console.log(`  http://localhost:${PORT}\n`);
-  startScheduler();
-  startSlackBot().catch(err => console.error("  Slack bot failed:", err.message));
-});
+export function startServer(port = PORT) {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, () => {
+      console.log(`\n  Bonaparte`);
+      console.log(`  http://localhost:${port}\n`);
+      startScheduler();
+      startSlackBot().catch((err) => console.error("  Slack bot failed:", err.message));
+      resolve(server);
+    });
+    server.once("error", reject);
+  });
+}
+
+// Direct run (npm start / node server.js). Inside Electron the main
+// process imports this module and calls startServer() itself, so skip
+// the auto-start path there.
+if (!process.versions.electron && process.argv[1]) {
+  const entry = `file://${process.argv[1].replace(/\\/g, "/")}`;
+  if (import.meta.url === entry) startServer();
+}

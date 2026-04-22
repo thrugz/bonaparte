@@ -370,10 +370,7 @@
     <a href="/features">Feature Hunt</a>
     <a href="/vchat">vChat</a>
     <a href="/content">Content</a>
-    <a href="/settings">Settings</a>
-    <span class="nav-sep"></span>
-    <a href="/logout" class="logout">Log out</a>
-  </nav>
+    <a href="/settings">Settings</a></nav>
 </div>
 
 <div class="shell">
@@ -921,12 +918,7 @@ function closeSlidePanel(){
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSlidePanel()});
 
-async function init(){
-  // Auth check
-  const me=await fetch('/api/me');
-  if(me.status===401){location.href='/login';return}
-
-  document.getElementById('ts').textContent=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+async function init(){document.getElementById('ts').textContent=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
   showSkeletons();
 
@@ -941,5 +933,6 @@ async function init(){
 }
 init();setInterval(init,3e5);
 </script>
+  <script src="/update-check.js" defer></script>
 </body>
 </html>

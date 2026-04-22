@@ -1,7 +1,6 @@
 node_modules/
-config/.env
-config/bonaparte.json
 .env
 Context/
 dist/
 release/
+.claude/

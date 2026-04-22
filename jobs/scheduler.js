@@ -14,6 +14,28 @@ import { logJobStart, logJobEnd, getLastRun } from "../lib/db.js";
 import runConsolidation from "./consolidation.js";
 import runMorningBrief from "./morning-brief.js";
 import runPortfolioAlerts from "./portfolio-alerts.js";
+import runHeartbeat from "./heartbeat.js";
+import { migrateAll } from "../lib/memory.js";
+
+const HEARTBEAT_INTERVAL_MS = 30 * 60 * 1000;
+const HEARTBEAT_FIRST_DELAY_MS = 90 * 1000;
+let heartbeatTimer = null;
+let heartbeatRunning = false;
+
+async function safeHeartbeat() {
+  if (heartbeatRunning) return;
+  heartbeatRunning = true;
+  const runId = logJobStart("heartbeat");
+  try {
+    const summary = await runHeartbeat();
+    logJobEnd(runId, "ok", summary);
+  } catch (err) {
+    logJobEnd(runId, "error", null, err.message);
+    console.warn("[heartbeat] error:", err.message);
+  } finally {
+    heartbeatRunning = false;
+  }
+}
 
 // Map short UI job names to remote trigger IDs and local implementations.
 const JOBS = {
@@ -42,8 +64,26 @@ function jobNameByTrigger(id) {
 }
 
 export function startScheduler() {
-  // No local cron. Scheduling lives in Anthropic remote triggers.
+  // Remote triggers still own the three big jobs. The heartbeat is local
+  // only (30 min, in-process) because it optimizes the local memory DB.
   console.log(`  [scheduler] remote-trigger mode (${Object.keys(JOBS).length} jobs mapped)`);
+
+  try {
+    const changed = migrateAll();
+    if (changed) console.log(`  [memory] migrated ${changed} nodes to new schema`);
+  } catch (err) {
+    console.warn("[memory] migration failed:", err.message);
+  }
+
+  if (!heartbeatTimer) {
+    setTimeout(safeHeartbeat, HEARTBEAT_FIRST_DELAY_MS);
+    heartbeatTimer = setInterval(safeHeartbeat, HEARTBEAT_INTERVAL_MS);
+    console.log(`  [heartbeat] every ${HEARTBEAT_INTERVAL_MS / 60000} min`);
+  }
+}
+
+export function runHeartbeatNow() {
+  return safeHeartbeat();
 }
 
 export async function getScheduledJobs() {

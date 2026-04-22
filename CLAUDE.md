@@ -337,17 +337,39 @@ Escalation: if Casper has RED alerts, Bram gets a separate heads-up DM.
 
 ---
 
-## Environment Variables (config\.env)
+## Environment Variables (%APPDATA%\Bonaparte\.env)
 
 SLACK_USER_TOKEN=xoxp-...        Dashboard canvas reads/writes (files.info + canvases.edit)
-SLACK_BOT_TOKEN=xoxb-...        Bonaparte bot: outbound DMs to team members
+SLACK_BOT_TOKEN=xoxb-...         Bonaparte bot: outbound DMs to team members
+SLACK_APP_TOKEN=xapp-...         Socket Mode for the Slack bot
+HUBSPOT_TOKEN=...                HubSpot private app token (dashboard reads)
+ANTHROPIC_API_KEY=...            Optional, falls back to Claude Code OAuth
 VITUS_API_KEY=...                Vitus platform API key (read-only)
 TAVILY_API_KEY=...               Web search for research mode
+APP_PASSWORD=...                 Login for the Bonaparte web UI
+PORT=3000                        Server port
 
 MCP connectors handle Slack/HubSpot auth for interactive sessions and scheduled triggers.
 The user token is for the local dashboard UI and canvas operations.
 The bot token is for all outbound DMs (so messages come from "Bonaparte", not Bram).
 Never log or expose these values.
+
+The `.env` lives in `%APPDATA%\Bonaparte\` (Windows) and is seeded from `.env.example`
+on first launch. Override with `BONAPARTE_USER_DIR=<path>`.
+
+---
+
+## Packaging (Windows .exe)
+
+Bonaparte ships as a single `bonaparte.exe` produced by `bun build --compile`. See README.md.
+
+- `npm run build` → `X:\bonaparte-dist\` (exe + `ui/` + `data/` + `.env.example`)
+- Read-only files resolve via `assetPath()` (relative to exe in compiled builds, repo root in dev)
+- Writable state (`.env`, `bonaparte.json`, `drafts.json`) lives under `userPath()` = `%APPDATA%\Bonaparte\`
+- Claude auth still uses `~/.claude/.credentials.json` — recipient needs Claude Code installed and signed in
+- Exe icon: `assets/bonaparte.ico` (Vitus bee, generated from `ui/public/logo.png`)
+
+To share: zip `X:\bonaparte-dist\`, drop in OneDrive/Slack. Recipient unzips and runs the exe.
 
 ---
 

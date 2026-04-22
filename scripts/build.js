@@ -38,14 +38,17 @@ if (existsSync(OUT)) {
 mkdirSync(OUT, { recursive: true });
 
 const exePath = join(OUT, "bonaparte.exe");
-run("bun", [
+const iconPath = join(REPO, "assets", "bonaparte.ico");
+const bunArgs = [
   "build",
   "--compile",
   "--target=bun-windows-x64",
   "server.js",
   "--outfile",
   exePath,
-]);
+];
+if (existsSync(iconPath)) bunArgs.push(`--windows-icon=${iconPath}`);
+run("bun", bunArgs);
 
 cpSync(join(REPO, "ui"), join(OUT, "ui"), { recursive: true });
 cpSync(join(REPO, "data"), join(OUT, "data"), { recursive: true });
